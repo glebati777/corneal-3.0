@@ -1,6 +1,6 @@
 {
-  "name": "aurelia-clinical-edition-ru",
-  "version": "1.0.0",
+  "name": "aurelia-clinical-worldclass-ru",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

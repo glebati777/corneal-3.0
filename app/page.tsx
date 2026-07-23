@@ -40,33 +40,67 @@ function MiniTrend({ values }: { values:number[] }) {
 }
 
 function CorneaExplorer({ risk }: { risk:number }) {
-  const [layer,setLayer] = useState<"Обзор"|"Эпителий"|"Строма"|"Трансплантат"|"Эндотелий">("Обзор");
-  const [tilt,setTilt] = useState({x:0,y:0});
-  const layers = ["Обзор","Эпителий","Строма","Трансплантат","Эндотелий"] as const;
-  const info:Record<string,{title:string;text:string;metric:string}> = {
-    "Обзор":{title:"Цифровой профиль",text:"Интерактивная модель объединяет клинические данные, биомаркеры и динамику наблюдения.",metric:`Риск ${risk}%`},
-    "Эпителий":{title:"Эпителий",text:"Поверхностный слой без выраженных признаков повреждения.",metric:"Стабильно"},
-    "Строма":{title:"Строма",text:"Умеренное увеличение толщины; динамика требует наблюдения.",metric:"565 мкм"},
-    "Трансплантат":{title:"Трансплантат",text:"Сохраняется прозрачность, однако воспалительный профиль усиливается.",metric:"68% стабильности"},
-    "Эндотелий":{title:"Эндотелий",text:"Плотность клеток снизилась относительно предыдущего визита.",metric:"1820 кл/мм²"},
-  };
-  return <section className="heroExplorer" onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();setTilt({x:(e.clientX-r.left-r.width/2)/r.width*12,y:(e.clientY-r.top-r.height/2)/r.height*10})}} onMouseLeave={()=>setTilt({x:0,y:0})}>
-    <div className="heroCopy">
-      <span className="eyebrow">ИНТЕРАКТИВНАЯ МОДЕЛЬ</span>
-      <h2>{info[layer].title}</h2>
-      <p>{info[layer].text}</p>
-      <div className="heroMetric"><strong>{info[layer].metric}</strong><span>Обновлено сегодня</span></div>
-      <div className="layerTabs">{layers.map(x=><button key={x} className={layer===x?"active":""} onClick={()=>setLayer(x)}>{x}</button>)}</div>
+  const [mode,setMode] = useState<"Слои"|"Активность"|"Прогноз">("Слои");
+  const [focus,setFocus] = useState<"Трансплантат"|"Эндотелий"|"Строма"|"Эпителий">("Трансплантат");
+  const [rotation,setRotation] = useState({x:-7,y:10});
+  const [visit,setVisit] = useState(6);
+  const visits=[28,34,39,48,58,64,risk];
+  const meta={
+    "Трансплантат":{value:"68%",label:"индекс стабильности",detail:"Прозрачность сохранена. В центральной зоне определяется нарастание иммунной активности."},
+    "Эндотелий":{value:"1820",label:"клеток/мм²",detail:"Плотность снижена на 7% к предыдущему визиту. Требуется контроль динамики."},
+    "Строма":{value:"565",label:"мкм",detail:"Умеренное утолщение без признаков выраженного отёка."},
+    "Эпителий":{value:"97%",label:"целостность",detail:"Поверхностный слой стабилен, дефекты эпителизации не выявлены."},
+  }[focus];
+  const move=(e:React.PointerEvent<HTMLElement>)=>{const r=e.currentTarget.getBoundingClientRect();setRotation({x:-10+(e.clientY-r.top)/r.height*12,y:-14+(e.clientX-r.left)/r.width*28})};
+  return <section className="twinShell">
+    <div className="twinTop">
+      <div><span className="eyebrow">ЦИФРОВОЙ ДВОЙНИК ТРАНСПЛАНТАТА</span><h2>Состояние роговицы в реальном времени</h2></div>
+      <div className="modeSwitch">{(["Слои","Активность","Прогноз"] as const).map(x=><button key={x} className={mode===x?"active":""} onClick={()=>setMode(x)}>{x}</button>)}</div>
     </div>
-    <div className="corneaStage" style={{transform:`rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`}}>
-      <div className="orbit orbit1"/><div className="orbit orbit2"/>
-      <div className={`corneaLayer epi ${layer==="Эпителий"?"selected":""}`}><span/></div>
-      <div className={`corneaLayer stro ${layer==="Строма"?"selected":""}`}><span/></div>
-      <div className={`corneaLayer graft ${layer==="Трансплантат"?"selected":""}`}><span/></div>
-      <div className={`corneaLayer endo ${layer==="Эндотелий"?"selected":""}`}><span/></div>
-      <div className="core"><Eye/></div>
-      {layer==="Обзор" && <><i className="signal s1"/><i className="signal s2"/><i className="signal s3"/></>}
+    <div className="twinBody">
+      <div className="twinViewport" onPointerMove={move} onPointerLeave={()=>setRotation({x:-7,y:10})}>
+        <div className="scanGrid"/>
+        <svg className={`corneaWorld mode-${mode.toLowerCase()}`} viewBox="0 0 760 520" style={{transform:`rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`}} role="img" aria-label="Интерактивная пространственная модель роговицы">
+          <defs>
+            <radialGradient id="iris" cx="50%" cy="45%"><stop offset="0" stopColor="#8bf4e6"/><stop offset=".35" stopColor="#24b6b0"/><stop offset=".72" stopColor="#0a6f79"/><stop offset="1" stopColor="#062b45"/></radialGradient>
+            <linearGradient id="glassA" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffffff" stopOpacity=".92"/><stop offset=".4" stopColor="#b9f4ef" stopOpacity=".46"/><stop offset="1" stopColor="#47b9dd" stopOpacity=".18"/></linearGradient>
+            <linearGradient id="glassB" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#f8ffff" stopOpacity=".82"/><stop offset="1" stopColor="#0e8f98" stopOpacity=".3"/></linearGradient>
+            <filter id="soft"><feGaussianBlur stdDeviation="7"/></filter>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <clipPath id="dome"><ellipse cx="380" cy="250" rx="230" ry="145"/></clipPath>
+          </defs>
+          <ellipse cx="380" cy="403" rx="275" ry="42" fill="#0b6c79" opacity=".1" filter="url(#soft)"/>
+          {[1,2,3,4].map(i=><ellipse key={i} cx="380" cy="360" rx={245+i*22} ry={56+i*8} fill="none" stroke="#39aeb7" strokeOpacity={.18-i*.025} strokeWidth="1"/>)}
+          <g className="worldLayers">
+            <ellipse onClick={()=>setFocus("Эндотелий")} className={focus==="Эндотелий"?"focusLayer":""} cx="380" cy="338" rx="220" ry="76" fill="url(#glassB)" stroke="#167f88" strokeOpacity=".55"/>
+            <path onClick={()=>setFocus("Строма")} className={focus==="Строма"?"focusLayer":""} d="M157 294 C182 165 578 165 603 294 L589 330 C555 405 205 405 171 330 Z" fill="url(#glassA)" stroke="#4caec2" strokeOpacity=".58"/>
+            <path onClick={()=>setFocus("Трансплантат")} className={focus==="Трансплантат"?"focusLayer":""} d="M211 288 C235 197 525 197 549 288 C522 333 238 333 211 288Z" fill="#69d7d0" fillOpacity=".26" stroke="#22b5ae" strokeWidth="2"/>
+            <path onClick={()=>setFocus("Эпителий")} className={focus==="Эпителий"?"focusLayer":""} d="M151 280 C172 105 588 105 609 280 C580 210 180 210 151 280Z" fill="#f5ffff" fillOpacity=".5" stroke="#b7e9ed"/>
+            <ellipse cx="380" cy="250" rx="91" ry="58" fill="url(#iris)" opacity=".93"/>
+            <ellipse cx="380" cy="250" rx="38" ry="27" fill="#041b2c"/>
+            <ellipse cx="356" cy="224" rx="22" ry="10" fill="#fff" opacity=".35" filter="url(#soft)"/>
+          </g>
+          {mode!=="Слои" && <g className="activityField" clipPath="url(#dome)">
+            {Array.from({length:22}).map((_,i)=>{const x=205+(i*79)%350,y=165+(i*47)%170,r=2+(i%4);return <circle key={i} cx={x} cy={y} r={r} fill={i%3===0?"#ff6b72":"#f6b44b"} opacity={.35+(i%5)*.1} filter="url(#glow)"/>})}
+          </g>}
+          {mode==="Прогноз" && <g className="riskHalo"><ellipse cx="380" cy="285" rx="245" ry="132" fill="none" stroke="#ef6a72" strokeWidth="8" strokeDasharray={`${risk*6} 600`} strokeLinecap="round"/><text x="380" y="455" textAnchor="middle" className="svgRisk">ПРОГНОЗ РИСКА {visits[visit]}%</text></g>}
+          <g className="labels">
+            <line x1="175" y1="170" x2="78" y2="130"/><circle cx="175" cy="170" r="4"/><text x="36" y="124">ЭПИТЕЛИЙ</text>
+            <line x1="181" y1="258" x2="70" y2="258"/><circle cx="181" cy="258" r="4"/><text x="28" y="252">СТРОМА</text>
+            <line x1="548" y1="290" x2="670" y2="248"/><circle cx="548" cy="290" r="4"/><text x="676" y="242">ТРАНСПЛАНТАТ</text>
+            <line x1="548" y1="348" x2="675" y2="374"/><circle cx="548" cy="348" r="4"/><text x="681" y="380">ЭНДОТЕЛИЙ</text>
+          </g>
+        </svg>
+        <div className="viewportTools"><button title="Сбросить положение" onClick={()=>setRotation({x:-7,y:10})}><Layers3/></button><span>Перемещайте курсор для обзора</span></div>
+      </div>
+      <aside className="twinInspector">
+        <span className="eyebrow">ВЫБРАННЫЙ СЛОЙ</span><h3>{focus}</h3>
+        <div className="inspectorValue"><strong>{meta.value}</strong><span>{meta.label}</span></div>
+        <p>{meta.detail}</p>
+        <div className="focusButtons">{(["Эпителий","Строма","Трансплантат","Эндотелий"] as const).map(x=><button key={x} className={focus===x?"active":""} onClick={()=>setFocus(x)}><i/><span>{x}</span><ChevronRight/></button>)}</div>
+      </aside>
     </div>
+    <div className="visitScrubber"><div className="scrubHeader"><span>Ретроспектива состояния</span><b>{["Операция","1 месяц","3 месяца","6 месяцев","9 месяцев","12 месяцев","Сегодня"][visit]} · риск {visits[visit]}%</b></div><input type="range" min="0" max="6" value={visit} onChange={e=>setVisit(Number(e.target.value))}/><div className="scrubLabels"><span>Операция</span><span>3 мес.</span><span>6 мес.</span><span>12 мес.</span><span>Сегодня</span></div></div>
   </section>;
 }
 
@@ -115,22 +149,18 @@ export default function Page(){
 function HomeView({patient,onProfile,onObservation}:{patient:Patient;onProfile:()=>void;onObservation:()=>void}){
   const recommendation=patient.risk>=65?"Контроль через 14 дней":"Плановое наблюдение";
   return <>
-    <section className="patientRibbon">
-      <div className="avatar">{patient.initials}</div><div className="patientIdentity"><span>{patient.id} · последний визит {patient.visitDate}</span><h2>{patient.name}</h2><p>{patient.age} лет · {patient.eye} · {patient.procedure}</p></div>
-      <div className="riskCompact"><span>Риск отторжения</span><strong>{patient.risk}%</strong><small className={patient.risk>=65?"dangerText":""}>{patient.status}</small></div>
-      <div className="ribbonTrend"><MiniTrend values={patient.history}/><span>{patient.trend>0?"+":""}{patient.trend}% за 30 дней</span></div>
-      <button className="primaryBtn" onClick={onProfile}>Открыть профиль <ArrowRight/></button>
+    <section className="patientCommand">
+      <div className="avatar">{patient.initials}</div>
+      <div className="patientIdentity"><span>{patient.id} · {patient.visitDate}</span><h2>{patient.name}</h2><p>{patient.age} лет · {patient.eye} · {patient.procedure}</p></div>
+      <div className="commandRisk"><span>Текущий риск</span><strong>{patient.risk}%</strong><small>{patient.status}</small></div>
+      <button className="primaryBtn" onClick={onProfile}>Карта пациента <ArrowRight/></button>
     </section>
-    <div className="homeGrid">
-      <CorneaExplorer risk={patient.risk}/>
-      <aside className="decisionPanel">
-        <span className="eyebrow">ГЛАВНОЕ НА СЕГОДНЯ</span><h2>Клиническое решение</h2>
-        <div className="decisionStatus"><Sparkles/><div><b>{recommendation}</b><span>Повторить IL-6, VEGF и оценку эндотелия</span></div></div>
-        <p>За последние 30 дней отмечается ускорение воспалительной активности. Основной вклад в прогноз вносят IL-6, VEGF и снижение плотности эндотелия.</p>
-        <button className="textBtn" onClick={onObservation}>Открыть план наблюдения <ChevronRight/></button>
-      </aside>
-    </div>
-    <section className="quickActions"><button onClick={onObservation}><History/><span><b>Последний визит</b><small>14 мая 2026</small></span><ChevronRight/></button><button><ClipboardList/><span><b>Сформировать отчёт</b><small>Клиническое заключение</small></span><ChevronRight/></button><button><CalendarDays/><span><b>Следующее действие</b><small>Контроль через 14 дней</small></span><ChevronRight/></button></section>
+    <CorneaExplorer risk={patient.risk}/>
+    <section className="clinicalStrip">
+      <div className="stripLead"><Sparkles/><div><span className="eyebrow">КЛИНИЧЕСКИЙ ПРИОРИТЕТ</span><h3>{recommendation}</h3></div></div>
+      <p>Рост IL-6 и VEGF на фоне снижения плотности эндотелия. Рекомендуется повторная оценка биомаркеров и спекулярная микроскопия.</p>
+      <button className="secondaryBtn" onClick={onObservation}>Открыть план <ChevronRight/></button>
+    </section>
   </>;
 }
 
