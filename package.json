@@ -1,6 +1,6 @@
 {
   "name": "aurelia-clinical-intelligence-2",
-  "version": "11.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
