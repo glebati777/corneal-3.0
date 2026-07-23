@@ -74,14 +74,10 @@ const nav = [
 ] as const;
 
 const twinModes: {id:TwinMode;label:string;icon:typeof Layers3}[] = [
-  {id:"fusion",label:"AURELIA Biofield",icon:WandSparkles},
-  {id:"anatomy",label:"Диагностическая станция",icon:Microscope},
-  {id:"explorer",label:"3D Cornea Explorer",icon:Layers3},
-  {id:"heat",label:"Карта активности",icon:ScanLine},
-  {id:"network",label:"Сеть биомаркеров",icon:Network},
-  {id:"timeline",label:"Машина времени",icon:Clock3},
-  {id:"forecast",label:"Прогноз 90 дней",icon:ChartNoAxesCombined},
-  {id:"simulation",label:"Сценарии лечения",icon:SlidersHorizontal}
+  {id:"fusion",label:"Живая модель глаза",icon:Eye},
+  {id:"anatomy",label:"Диагностика",icon:Microscope},
+  {id:"timeline",label:"Динамика",icon:Clock3},
+  {id:"simulation",label:"Сценарий лечения",icon:Stethoscope}
 ];
 
 function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number;selected:number;onSelect:(n:number)=>void}){
@@ -99,7 +95,7 @@ function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number
       if(canvas.width!==Math.floor(rect.width*dpr)||canvas.height!==Math.floor(rect.height*dpr)){canvas.width=Math.floor(rect.width*dpr);canvas.height=Math.floor(rect.height*dpr)}
       ctx.setTransform(dpr,0,0,dpr,0,0); const w=rect.width,h=rect.height; ctx.clearRect(0,0,w,h); frame.current+=0.012;
       const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,"#07151d");bg.addColorStop(1,"#0b2029");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-      if(mode==="fusion") drawBiofield(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);
+      if(mode==="fusion") drawEyeModel(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);
       if(mode==="anatomy") drawWorkstation(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);
       if(mode==="explorer") drawCorneaExplorer(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);
       if(mode==="heat") drawPachymetry(ctx,w,h,time,pointer.current.x,pointer.current.y);
@@ -116,6 +112,37 @@ function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number
   return <canvas ref={canvasRef} className="twinCanvas clinicalCanvas" onPointerMove={pointerMove} onPointerLeave={()=>{pointer.current={x:0,y:0}}} onClick={click}/>;
 }
 
+
+function drawEyeModel(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
+  const cx=w*.48, cy=h*.50, R=Math.min(w,h)*.34;
+  const lookX=((px||.5)-.5)*R*.22, lookY=((py||.5)-.5)*R*.14;
+  const pulse=.5+.5*Math.sin(t*1.5);
+  const bg=ctx.createRadialGradient(cx,cy,R*.15,cx,cy,R*1.55);bg.addColorStop(0,'#183743');bg.addColorStop(.55,'#091a23');bg.addColorStop(1,'#040d13');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  // orbital glow
+  const glow=ctx.createRadialGradient(cx,cy,R*.5,cx,cy,R*1.22);glow.addColorStop(0,'rgba(72,196,188,.12)');glow.addColorStop(1,'rgba(72,196,188,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,R*1.22,0,Math.PI*2);ctx.fill();
+  // sclera
+  const scl=ctx.createRadialGradient(cx-R*.28,cy-R*.3,R*.08,cx,cy,R);scl.addColorStop(0,'#ffffff');scl.addColorStop(.58,'#dcecf0');scl.addColorStop(1,'#8eaab3');ctx.fillStyle=scl;ctx.beginPath();ctx.ellipse(cx,cy,R*1.18,R*.93,0,0,Math.PI*2);ctx.fill();
+  // subtle vessels
+  ctx.strokeStyle='rgba(184,75,92,.18)';ctx.lineWidth=1;for(let i=0;i<18;i++){const a=i/18*Math.PI*2;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*R*.84,cy+Math.sin(a)*R*.67);ctx.quadraticCurveTo(cx+Math.cos(a+.18)*R*.98,cy+Math.sin(a+.14)*R*.82,cx+Math.cos(a)*R*1.12,cy+Math.sin(a)*R*.88);ctx.stroke()}
+  const ix=cx+lookX, iy=cy+lookY;
+  // iris
+  const iris=ctx.createRadialGradient(ix-R*.08,iy-R*.08,R*.05,ix,iy,R*.48);iris.addColorStop(0,'#0b171a');iris.addColorStop(.28,'#1d4d4c');iris.addColorStop(.62,'#3d8f86');iris.addColorStop(1,'#122f35');ctx.fillStyle=iris;ctx.beginPath();ctx.arc(ix,iy,R*.48,0,Math.PI*2);ctx.fill();
+  // iris fibers
+  for(let i=0;i<96;i++){const a=i/96*Math.PI*2;const jitter=.72+.18*Math.sin(i*4.7+t*.25);ctx.strokeStyle=i%7===0?'rgba(225,201,120,.30)':'rgba(156,235,218,.22)';ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*R*.15,iy+Math.sin(a)*R*.15);ctx.lineTo(ix+Math.cos(a)*R*.45*jitter,iy+Math.sin(a)*R*.45*jitter);ctx.stroke()}
+  // pupil reacts gently
+  const pr=R*(.135+.018*Math.sin(t*.9));ctx.fillStyle='#020609';ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
+  // corneal dome
+  const cor=ctx.createRadialGradient(ix-R*.18,iy-R*.22,R*.04,ix,iy,R*.65);cor.addColorStop(0,'rgba(255,255,255,.34)');cor.addColorStop(.45,'rgba(131,230,224,.08)');cor.addColorStop(1,'rgba(67,174,177,.16)');ctx.fillStyle=cor;ctx.beginPath();ctx.arc(ix,iy,R*.62,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(137,240,230,.42)';ctx.lineWidth=2;ctx.stroke();
+  // transplant ring
+  ctx.strokeStyle='rgba(72,219,202,.9)';ctx.lineWidth=2.2;ctx.setLineDash([7,7]);ctx.beginPath();ctx.arc(ix,iy,R*.54,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  // animated inflammation focus
+  const hx=ix+R*.26, hy=iy-R*.16;const hg=ctx.createRadialGradient(hx,hy,2,hx,hy,R*(.12+.025*pulse));hg.addColorStop(0,'rgba(248,91,119,.72)');hg.addColorStop(.45,'rgba(239,102,122,.28)');hg.addColorStop(1,'rgba(239,102,122,0)');ctx.fillStyle=hg;ctx.beginPath();ctx.arc(hx,hy,R*.18,0,Math.PI*2);ctx.fill();
+  // highlights and blink shadow
+  ctx.fillStyle='rgba(255,255,255,.75)';ctx.beginPath();ctx.ellipse(ix-R*.18,iy-R*.22,R*.11,R*.055,-.5,0,Math.PI*2);ctx.fill();
+  const blink=Math.max(0,Math.sin(t*.24* Math.PI*2)-.92)*12; if(blink>0){ctx.fillStyle='rgba(4,13,18,.78)';ctx.beginPath();ctx.ellipse(cx,cy-R*.72+blink,R*1.25,R*.45,0,0,Math.PI*2);ctx.fill()}
+  label(ctx,'DIGITAL EYE TWIN · фронтальная модель',24,28);label(ctx,'Трансплантат синхронизирован · зона активности отмечена',24,h-22);
+  label(ctx,'72% риск',w-28,30,'right');
+}
 function drawBiofield(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
   grid(ctx,w,h); const cx=w*.48,cy=h*.5; const R=Math.min(w,h)*.31;
   const risk=.35+time*.045; const tilt=((px||.5)-.5)*.34; ctx.save();ctx.translate(cx,cy);ctx.rotate(tilt);
@@ -268,12 +295,12 @@ function WorldClassTwin({onOpen}:{onOpen:()=>void}){
   const simulatedRisk=Math.max(18,Math.round(patient.risk-(adherence*.18+therapy*.16+monitoring*.08-18)));
   useEffect(()=>{if(!playing)return;const id=window.setInterval(()=>setTime(v=>v>=10?0:v+1),650);return()=>window.clearInterval(id)},[playing]);
   return <section className={`worldTwin ${fullscreen?"fullscreen":""}`}>
-    <div className="twinHeader"><div><span className="eyebrow">AURELIA CLINICAL INTELLIGENCE 2.1 · BIOFIELD TWIN GEN 6</span><h2>Мультимодальная модель трансплантата</h2><p>Единое клиническое пространство: AS-OCT, 3D-реконструкция, эндотелий, пахиметрия, биомаркеры и объяснение модели синхронизированы по визиту.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(10);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
+    <div className="twinHeader"><div><span className="eyebrow">AURELIA CLINICAL INTELLIGENCE 2.2 · DIGITAL EYE TWIN</span><h2>Живая модель глаза и трансплантата</h2><p>Главная показывает только главное: состояние глаза, риск, динамику и следующий клинический шаг.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(10);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
     <div className="modeRail">{twinModes.map(({id,label,icon:Icon})=><button key={id} className={mode===id?"active":""} onClick={()=>setMode(id)}><Icon/><span>{label}</span></button>)}</div>
     <div className="twinBody"><div className={`visualStage ${compare?"compareOn":""}`}><DigitalTwin mode={mode} time={time} selected={selected} onSelect={setSelected}/><div className="stageBadge"><i/><span>{compare?"Сравнение: +30 дней":"Модель синхронизирована"}</span><b>14.05.2026</b></div><div className="modelTelemetry"><span><i/> AS-OCT 14.05.2026</span><span><i/> ECD 1820 кл/мм²</span><span><i/> CCT 565 µm</span></div>{compare&&<div className="comparisonCard"><span>Изменение с прошлого визита</span><strong>+14%</strong><small>IL-6 ↑18% · VEGF-A ↑11% · ECD ↓7%</small></div>}</div>
-      <aside className="inspector"><span className="eyebrow">{mode==="simulation"?"CLINICAL SCENARIO ENGINE":"КЛИНИЧЕСКИЙ СИГНАЛ"}</span><h3>{mode==="network"?signal.name:mode==="fusion"?"Динамическое поле трансплантата":mode==="forecast"?"Прогноз при наблюдении":mode==="simulation"?"Персональный сценарий":mode==="explorer"?"Слои роговицы":"Риск отторжения"}</h3><div className="inspectorValue"><strong>{mode==="network"?signal.value:mode==="forecast"?43:mode==="simulation"?simulatedRisk:mode==="explorer"?5:mode==="fusion"?Math.round(35+time*4.5):patient.risk}</strong><span>{mode==="network"?signal.unit:mode==="explorer"?"слоёв":mode==="fusion"?"activity":"%"}</span></div>
-      {mode==="simulation"?<div className="scenarioControls"><label><span>Приверженность терапии <b>{adherence}%</b></span><input type="range" min="30" max="100" value={adherence} onChange={e=>setAdherence(+e.target.value)}/></label><label><span>Интенсивность терапии <b>{therapy}%</b></span><input type="range" min="20" max="100" value={therapy} onChange={e=>setTherapy(+e.target.value)}/></label><label><span>Частота мониторинга <b>{monitoring}%</b></span><input type="range" min="30" max="100" value={monitoring} onChange={e=>setMonitoring(+e.target.value)}/></label><div className="scenarioDelta"><span>Ожидаемое изменение</span><b>−{patient.risk-simulatedRisk} п.п.</b><small>Расчёт демонстрационный и не заменяет врачебное решение</small></div></div>:<><p>{mode==="network"?`${signal.group}. Динамика ${signal.delta>0?"+":""}${signal.delta}% относительно предыдущего визита.`:mode==="fusion"?"Модель объединяет временную динамику цитокинов, локальную деформацию стромы и снижение эндотелиального резерва в единое анимированное поле.":mode==="forecast"?"Ожидаемое снижение риска до 43% за 90 дней при выполнении предложенного протокола наблюдения.":"Рост центральной толщины, снижение эндотелиальной плотности и провоспалительный профиль согласованно повышают риск. Визуализация использует демонстрационные данные пациента."}</p><div className="impact"><span>{mode==="network"?"Вклад в прогноз":"Достоверность"}</span><b>{mode==="network"?signal.weight:patient.confidence}%</b><em><i style={{width:`${mode==="network"?signal.weight:patient.confidence}%`}}/></em></div><div className="miniSignals">{top.slice(0,4).map((m,i)=><button key={m.name} onClick={()=>{setMode("network");setSelected(i)}}><span>{m.name}</span><b>{m.weight}%</b></button>)}</div></>}
-      <div className="decisionStack"><button className="decision" onClick={()=>setResult(mode==="simulation"?`Сценарий сохранён: прогноз ${simulatedRisk}%, снижение на ${patient.risk-simulatedRisk} п.п.`:"План создан: контрольный визит через 14 дней, AS-OCT, ECD и панель IL-6/IL-17A/VEGF-A.")}><span>Следующее действие</span><b>{mode==="simulation"?"Сохранить сценарий":"Создать план контроля"}</b><ChevronRight/></button><button className="darkButton" onClick={onOpen}>Открыть исследование<ArrowUpRight/></button></div>{result&&<div className="actionResult" aria-live="polite"><CheckCircle2/><div><b>Действие выполнено</b><span>{result}</span></div><button onClick={()=>setResult("")}><X/></button></div>}</aside>
+      <aside className="inspector"><span className="eyebrow">{mode==="simulation"?"CLINICAL SCENARIO ENGINE":"КЛИНИЧЕСКИЙ СИГНАЛ"}</span><h3>{mode==="network"?signal.name:mode==="fusion"?"Глаз и зона трансплантата":mode==="forecast"?"Прогноз при наблюдении":mode==="simulation"?"Персональный сценарий":mode==="explorer"?"Слои роговицы":"Риск отторжения"}</h3><div className="inspectorValue"><strong>{mode==="network"?signal.value:mode==="forecast"?43:mode==="simulation"?simulatedRisk:mode==="explorer"?5:mode==="fusion"?patient.risk:patient.risk}</strong><span>{mode==="network"?signal.unit:mode==="explorer"?"слоёв":mode==="fusion"?"%":"%"}</span></div>
+      {mode==="simulation"?<div className="treatmentPlan"><div className="planAlert"><ShieldCheck/><div><b>Учебный клинический сценарий</b><span>Подозрение на эндотелиальное отторжение после PKP требует осмотра роговичного хирурга в тот же день.</span></div></div><ol><li><b>Сегодня:</b> щелевая лампа, ВГД, острота зрения, пахиметрия, AS-OCT и фотофиксация; исключить инфекционный кератит и герпетическую инфекцию.</li><li><b>После подтверждения врачом:</b> интенсивный местный кортикостероид является основой терапии; в опубликованных протоколах при тяжёлом эндотелиальном отторжении применяют преднизолона ацетат 1% ежечасно либо дифлупреднат 0,05% каждые 2 часа.</li><li><b>Тяжёлое течение:</b> специалист может рассмотреть системный кортикостероид или пульс-терапию; это требует оценки противопоказаний и медицинского наблюдения.</li><li><b>Контроль:</b> повторная оценка через 24–48 часов, затем индивидуальное постепенное снижение частоты в течение 6–8 недель по клиническому ответу.</li><li><b>Долгосрочно:</b> после купирования эпизода обсуждается поддерживающая низкодозовая стероидная профилактика с контролем ВГД, катаракты и инфекции.</li></ol><div className="evidenceNote"><b>Основание:</b> AAO/EyeWiki; обзор Panda et al.; рандомизированное исследование Shimazaki et al. План не является назначением и должен быть подтверждён офтальмологом.</div></div>:<><p>{mode==="network"?`${signal.group}. Динамика ${signal.delta>0?"+":""}${signal.delta}% относительно предыдущего визита.`:mode==="fusion"?"Анимированная фронтальная модель показывает роговицу, радужку, зрачок, границу трансплантата и локальную зону воспалительной активности.":mode==="forecast"?"Ожидаемое снижение риска до 43% за 90 дней при выполнении предложенного протокола наблюдения.":"Рост центральной толщины, снижение эндотелиальной плотности и провоспалительный профиль согласованно повышают риск. Визуализация использует демонстрационные данные пациента."}</p><div className="impact"><span>{mode==="network"?"Вклад в прогноз":"Достоверность"}</span><b>{mode==="network"?signal.weight:patient.confidence}%</b><em><i style={{width:`${mode==="network"?signal.weight:patient.confidence}%`}}/></em></div><div className="miniSignals">{top.slice(0,4).map((m,i)=><button key={m.name} onClick={()=>{setMode("network");setSelected(i)}}><span>{m.name}</span><b>{m.weight}%</b></button>)}</div></>}
+      <div className="decisionStack"><button className="decision" onClick={()=>setResult(mode==="simulation"?`План сохранён в черновики: срочный осмотр сегодня, контроль через 24–48 часов и мониторинг ВГД.`:"План создан: контрольный визит через 14 дней, AS-OCT, ECD и панель IL-6/IL-17A/VEGF-A.")}><span>Следующее действие</span><b>{mode==="simulation"?"Сохранить план":"Создать план контроля"}</b><ChevronRight/></button><button className="darkButton" onClick={onOpen}>Открыть исследование<ArrowUpRight/></button></div>{result&&<div className="actionResult" aria-live="polite"><CheckCircle2/><div><b>Действие выполнено</b><span>{result}</span></div><button onClick={()=>setResult("")}><X/></button></div>}</aside>
     </div>
     <div className="timeControl"><div><Clock3/><span>Состояние модели</span><b>{time===10?"Сегодня":`${time*40} дней после операции`}</b></div><input aria-label="Время" type="range" min="0" max="10" value={time} onChange={e=>setTime(Number(e.target.value))}/><div className="timeTicks"><span>Операция</span><span>3 мес.</span><span>6 мес.</span><span>9 мес.</span><span>Сегодня</span></div></div>
   </section>
@@ -292,7 +319,7 @@ function Shell(){
   </div>
 }
 
-function HomeScreen({go,open}:{go:(v:View)=>void;open:()=>void}){return <><section className="patientHero"><div className="patientIdentity"><div className="avatar">ИИ</div><div><span>{patient.id} · последний визит 14.05.2026</span><h1>{patient.name}</h1><p>{patient.age} лет · {patient.eye} · {patient.procedure}</p></div></div><div className="heroRisk"><span>Риск отторжения</span><strong>{patient.risk}%</strong><small>↑ 14% за 30 дней</small></div><button className="darkButton" onClick={()=>go("patients")}>Открыть профиль<ChevronRight/></button></section><WorldClassTwin onOpen={open}/><section className="priorityBar"><div><Sparkles/><span>Приоритет системы</span><b>Контроль через 14 дней</b></div><p>Повторить панель IL-6, IL-17A, IL-23, VEGF-A и выполнить спекулярную микроскопию.</p><button onClick={()=>go("observation")}>Открыть план<ChevronRight/></button></section></>}
+function HomeScreen({go,open}:{go:(v:View)=>void;open:()=>void}){return <><section className="patientHero compactHero"><div className="patientIdentity"><div className="avatar">ИИ</div><div><span>{patient.id} · последний визит 14.05.2026</span><h1>{patient.name}</h1><p>{patient.age} лет · {patient.eye} · {patient.procedure}</p></div></div><div className="heroRisk"><span>Риск отторжения</span><strong>{patient.risk}%</strong><small>требует очной оценки</small></div><button className="darkButton" onClick={()=>go("patients")}>Профиль<ChevronRight/></button></section><WorldClassTwin onOpen={open}/></>}
 
 function VisitDrawer({patientName,close,onSelect}:{patientName:string;close:()=>void;onSelect:(v:number)=>void}){
   const visits=[
