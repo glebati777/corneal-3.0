@@ -1,5 +1,15 @@
 import "./globals.css";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "AURELIA OS", description: "Clinical Intelligence Operating System" };
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
+export const metadata: Metadata = {
+  title: "AURELIA — Клиническое рабочее пространство",
+  description: "Система поддержки принятия клинических решений после трансплантации роговицы",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru">
+      <body>{children}</body>
+    </html>
+  );
+}

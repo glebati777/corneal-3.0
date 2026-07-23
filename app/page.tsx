@@ -1,45 +1,322 @@
 "use client";
-import { useMemo, useState } from "react";
-import { Activity, ArrowUpRight, Bell, Brain, ChevronRight, Command, FileText, FlaskConical, Gauge, Layers3, Search, Settings, ShieldCheck, Sparkles, Stethoscope, Users, X } from "lucide-react";
 
-type Patient={id:string;name:string;initials:string;procedure:string;day:number;risk:number;trend:number;confidence:number;markers:{name:string;value:number;unit:string;status:"normal"|"watch"|"high"}[];history:number[]};
-const PATIENTS:Patient[]=[
-{id:"CR-0318",name:"James Kim",initials:"JK",procedure:"Repeat PKP",day:144,risk:72,trend:14,confidence:93,history:[31,38,44,58,72],markers:[{name:"VEGF",value:96,unit:"pg/mL",status:"high"},{name:"IL-6",value:16.4,unit:"pg/mL",status:"high"},{name:"TNF-α",value:12.2,unit:"pg/mL",status:"watch"},{name:"TGF-β",value:24,unit:"ng/mL",status:"watch"}]},
-{id:"CR-0241",name:"Alex Morgan",initials:"AM",procedure:"Primary DMEK",day:92,risk:18,trend:-6,confidence:96,history:[36,30,26,22,18],markers:[{name:"VEGF",value:31,unit:"pg/mL",status:"normal"},{name:"IL-6",value:5.1,unit:"pg/mL",status:"normal"},{name:"TNF-α",value:3.9,unit:"pg/mL",status:"normal"},{name:"TGF-β",value:39,unit:"ng/mL",status:"normal"}]},
-{id:"CR-0196",name:"Rina Shah",initials:"RS",procedure:"Primary DSAEK",day:61,risk:41,trend:4,confidence:90,history:[28,31,33,37,41],markers:[{name:"VEGF",value:57,unit:"pg/mL",status:"watch"},{name:"IL-6",value:9.1,unit:"pg/mL",status:"watch"},{name:"TNF-α",value:7,unit:"pg/mL",status:"watch"},{name:"TGF-β",value:30,unit:"ng/mL",status:"normal"}]}
+import { useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  Bell,
+  BrainCircuit,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  CircleHelp,
+  Command,
+  FileText,
+  FlaskConical,
+  Gauge,
+  HeartPulse,
+  History,
+  LayoutDashboard,
+  Menu,
+  Microscope,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Users,
+  X,
+} from "lucide-react";
+
+type MarkerStatus = "normal" | "watch" | "high";
+type Patient = {
+  id: string;
+  name: string;
+  initials: string;
+  age: number;
+  eye: "OD" | "OS";
+  procedure: string;
+  operationDate: string;
+  doctor: string;
+  visitDate: string;
+  day: number;
+  risk: number;
+  trend: number;
+  confidence: number;
+  history: number[];
+  markers: { name: string; value: number; unit: string; status: MarkerStatus; delta: string }[];
+};
+
+const PATIENTS: Patient[] = [
+  {
+    id: "CR-0318",
+    name: "Иванов Иван Иванович",
+    initials: "ИИ",
+    age: 56,
+    eye: "OD",
+    procedure: "Сквозная кератопластика",
+    operationDate: "12.04.2025",
+    doctor: "Смирнова Е.А.",
+    visitDate: "14.05.2026",
+    day: 397,
+    risk: 72,
+    trend: 14,
+    confidence: 93,
+    history: [28, 34, 39, 48, 58, 64, 72],
+    markers: [
+      { name: "IL-6", value: 14.8, unit: "пг/мл", status: "high", delta: "+18%" },
+      { name: "VEGF", value: 212, unit: "пг/мл", status: "high", delta: "+11%" },
+      { name: "TNF-α", value: 9.4, unit: "пг/мл", status: "watch", delta: "+4%" },
+      { name: "Эндотелий", value: 1820, unit: "кл/мм²", status: "watch", delta: "−7%" },
+    ],
+  },
+  {
+    id: "CR-0241",
+    name: "Петрова Анна Сергеевна",
+    initials: "ПА",
+    age: 43,
+    eye: "OS",
+    procedure: "DMEK",
+    operationDate: "03.02.2026",
+    doctor: "Смирнова Е.А.",
+    visitDate: "20.05.2026",
+    day: 106,
+    risk: 19,
+    trend: -6,
+    confidence: 96,
+    history: [36, 31, 28, 25, 23, 21, 19],
+    markers: [
+      { name: "IL-6", value: 5.1, unit: "пг/мл", status: "normal", delta: "−8%" },
+      { name: "VEGF", value: 74, unit: "пг/мл", status: "normal", delta: "−6%" },
+      { name: "TNF-α", value: 3.9, unit: "пг/мл", status: "normal", delta: "−3%" },
+      { name: "Эндотелий", value: 2410, unit: "кл/мм²", status: "normal", delta: "+2%" },
+    ],
+  },
+  {
+    id: "CR-0196",
+    name: "Кузнецов Михаил Олегович",
+    initials: "КМ",
+    age: 61,
+    eye: "OD",
+    procedure: "DSAEK",
+    operationDate: "18.11.2025",
+    doctor: "Орлова Н.В.",
+    visitDate: "18.05.2026",
+    day: 181,
+    risk: 41,
+    trend: 4,
+    confidence: 90,
+    history: [29, 31, 33, 34, 37, 39, 41],
+    markers: [
+      { name: "IL-6", value: 8.9, unit: "пг/мл", status: "watch", delta: "+5%" },
+      { name: "VEGF", value: 131, unit: "пг/мл", status: "watch", delta: "+7%" },
+      { name: "TNF-α", value: 6.7, unit: "пг/мл", status: "watch", delta: "+2%" },
+      { name: "Эндотелий", value: 2050, unit: "кл/мм²", status: "normal", delta: "−2%" },
+    ],
+  },
 ];
 
-function Twin({risk,sim}:{risk:number;sim:number}){const projected=Math.max(8,Math.round(risk-sim*0.42));return <div className="twinShell"><div className="halo h1"/><div className="halo h2"/><div className="halo h3"/><div className="orbit"><span/><span/><span/></div><div className="twinCore"><div className="coreGlow"/><strong>{projected}%</strong><small>projected risk</small></div><div className="twinLabel t1">IMMUNE<br/><b>{risk>60?"ACTIVE":"CONTROLLED"}</b></div><div className="twinLabel t2">ENDOTHELIUM<br/><b>{risk>60?"DECLINING":"STABLE"}</b></div><div className="twinLabel t3">CYTOKINES<br/><b>{risk>60?"ELEVATED":"BALANCED"}</b></div></div>}
-function Line({values}:{values:number[]}){const pts=values.map((v,i)=>`${(i/(values.length-1))*100},${100-v}`).join(" ");return <svg className="line" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" x2="1"><stop stopColor="#76f7d2"/><stop offset="1" stopColor="#7aa2ff"/></linearGradient></defs><polyline points={pts} fill="none" stroke="url(#g)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-
-export default function Page(){
- const [selected,setSelected]=useState(0); const [sim,setSim]=useState(0); const [cmd,setCmd]=useState(false); const [mode,setMode]=useState<"clinical"|"research">("clinical");
- const p=PATIENTS[selected]; const projected=Math.max(8,Math.round(p.risk-sim*0.42));
- const insight=useMemo(()=>p.risk>60?"The current trajectory suggests accelerated immune activation. Rising VEGF and IL-6 are the dominant contributors. Consider endothelial imaging and repeat biomarker assessment within 14 days.":p.risk>30?"A moderate inflammatory shift is present. Current findings support closer interval monitoring and correlation with graft imaging.":"The graft profile remains stable. Biomarkers and longitudinal risk are moving in a favorable direction.",[p]);
- return <main>
-  <aside className="rail">
-   <div className="brand"><div className="mark">A</div><div><strong>AURELIA</strong><span>Clinical Intelligence OS</span></div></div>
-   <nav><button className={mode==="clinical"?"active":""} onClick={()=>setMode("clinical")}><Stethoscope/>Clinical</button><button className={mode==="research"?"active":""} onClick={()=>setMode("research")}><FlaskConical/>Research</button><button><Users/>Cohorts</button><button><ShieldCheck/>Governance</button></nav>
-   <div className="railBottom"><button onClick={()=>setCmd(true)}><Command/>Command</button><button><Settings/>Settings</button><div className="profile"><span>PH</span><div><b>Pham Huy</b><small>Clinical Researcher</small></div></div></div>
-  </aside>
-  <section className="workspace">
-   <header><button className="search" onClick={()=>setCmd(true)}><Search/>Search patients, cohorts, reports <kbd>⌘ K</kbd></button><div className="headerActions"><span className="live"><i/>SYSTEM ONLINE</span><button className="icon"><Bell/></button></div></header>
-   {mode==="clinical"?<>
-   <div className="patientBar"><div className="patientIdentity"><span className="avatar">{p.initials}</span><div><p>{p.id} · POST-OP DAY {p.day}</p><h1>{p.name}</h1><span>{p.procedure}</span></div></div><div className="patientSwitch">{PATIENTS.map((x,i)=><button key={x.id} className={i===selected?"selected":""} onClick={()=>{setSelected(i);setSim(0)}}>{x.initials}</button>)}</div><button className="report"><FileText/>Generate report</button></div>
-   <div className="heroGrid">
-    <section className="twinPanel"><div className="panelTop"><div><span className="eyebrow">PATIENT DIGITAL TWIN</span><h2>Live graft state</h2></div><span className="confidence"><Sparkles/> {p.confidence}% confidence</span></div><Twin risk={p.risk} sim={sim}/><div className="twinFooter"><span><i className="green"/>Corneal barrier</span><span><i className="blue"/>Endothelium</span><span><i className="coral"/>Immune response</span></div></section>
-    <section className="insightPanel"><div className="panelTop"><div><span className="eyebrow">SYSTEM ASSESSMENT</span><h2>Clinical insight</h2></div><Brain/></div><p className="insight">{insight}</p><div className="drivers"><div><span>Primary driver</span><b>{p.risk>60?"VEGF elevation":"Stable endothelial profile"}</b></div><div><span>Trajectory</span><b className={p.trend>0?"bad":"good"}>{p.trend>0?"+":""}{p.trend}% / 30d</b></div><div><span>Model confidence</span><b>{p.confidence}%</b></div></div><button className="deep">Open full reasoning <ArrowUpRight/></button></section>
-   </div>
-   <div className="lowerGrid">
-    <section className="trajectory"><div className="panelTop"><div><span className="eyebrow">LONGITUDINAL INTELLIGENCE</span><h2>Risk trajectory</h2></div><strong className={p.risk>60?"risk high":p.risk>30?"risk mid":"risk low"}>{p.risk}%</strong></div><div className="chart"><div className="gridLines"/><Line values={p.history}/></div><div className="axis"><span>May</span><span>Jun</span><span>Jul</span><span>Now</span></div></section>
-    <section className="markers"><div className="panelTop"><div><span className="eyebrow">LIVE BIOMARKERS</span><h2>Signal matrix</h2></div><Activity/></div><div className="markerGrid">{p.markers.map(m=><div key={m.name} className={`marker ${m.status}`}><span>{m.name}</span><strong>{m.value}</strong><small>{m.unit}</small></div>)}</div></section>
-   </div>
-   <section className="simulation"><div><span className="eyebrow">SIMULATION LAB</span><h2>Treatment scenario</h2><p>Explore how a hypothetical reduction in inflammatory load could alter the projected trajectory.</p></div><div className="simControl"><div><span>Intervention intensity</span><b>{sim}%</b></div><input type="range" min="0" max="70" value={sim} onChange={e=>setSim(Number(e.target.value))}/><div className="simResult"><span>Current <b>{p.risk}%</b></span><ChevronRight/><span>Projected <b>{projected}%</b></span></div></div></section>
-   </>:<Research/>}
-  </section>
-  {cmd&&<div className="overlay" onClick={()=>setCmd(false)}><div className="commandBox" onClick={e=>e.stopPropagation()}><div className="commandSearch"><Search/><input autoFocus placeholder="Search or run a command..."/><button onClick={()=>setCmd(false)}><X/></button></div><div className="commandList"><span>QUICK ACTIONS</span>{["Open patient workspace","Compare latest visits","Generate clinical report","Open Research Studio","Export cohort dataset"].map((x,i)=><button key={x}><i>{i+1}</i>{x}<ChevronRight/></button>)}</div></div></div>}
- </main>
+function riskLabel(risk: number) {
+  if (risk >= 65) return "Высокий риск";
+  if (risk >= 35) return "Умеренный риск";
+  return "Низкий риск";
 }
 
-function Research(){return <div className="researchView"><div className="researchHero"><div><span className="eyebrow">RESEARCH STUDIO</span><h1>Evidence, not decoration.</h1><p>Model performance, cohort behavior and explainability in one controlled research environment.</p></div><button><FileText/>Export research brief</button></div><div className="researchGrid"><Metric title="AUROC" value="0.842" note="95% CI 0.79–0.89"/><Metric title="Sensitivity" value="88.1%" note="At selected threshold"/><Metric title="Calibration" value="0.118" note="Brier score"/><Metric title="Cohort" value="1,248" note="Validated observations"/></div><div className="researchCharts"><section><span className="eyebrow">DISCRIMINATION</span><h2>ROC performance</h2><svg viewBox="0 0 100 100"><line x1="0" y1="100" x2="100" y2="0" className="diag"/><polyline points="0,100 8,68 18,45 34,26 56,13 78,6 100,0"/></svg></section><section><span className="eyebrow">SURVIVAL</span><h2>Kaplan–Meier</h2><svg viewBox="0 0 100 100"><polyline points="0,6 18,6 18,14 35,14 35,23 52,23 52,38 70,38 70,58 86,58 86,76 100,76"/></svg></section></div></div>}
-function Metric({title,value,note}:{title:string;value:string;note:string}){return <div className="metric"><span>{title}</span><strong>{value}</strong><small>{note}</small></div>}
+function RiskArc({ value }: { value: number }) {
+  const radius = 72;
+  const circumference = Math.PI * radius;
+  const offset = circumference * (1 - value / 100);
+  return (
+    <div className="riskArc">
+      <svg viewBox="0 0 180 104" aria-label={`Риск ${value}%`}>
+        <path className="arcBase" d="M 18 90 A 72 72 0 0 1 162 90" />
+        <path
+          className={`arcValue ${value >= 65 ? "danger" : value >= 35 ? "warning" : "safe"}`}
+          d="M 18 90 A 72 72 0 0 1 162 90"
+          pathLength="100"
+          strokeDasharray="100"
+          strokeDashoffset={100 - value}
+        />
+      </svg>
+      <div className="riskNumber"><strong>{value}%</strong><span>{riskLabel(value)}</span></div>
+    </div>
+  );
+}
+
+function CorneaProfile({ risk }: { risk: number }) {
+  const inflammation = Math.min(92, Math.round(risk * 1.08));
+  const endothelial = Math.max(38, 100 - Math.round(risk * 0.57));
+  return (
+    <div className="corneaProfile">
+      <div className="corneaVisual" aria-label="Цифровой профиль трансплантата">
+        <div className="corneaGlow" />
+        <div className="layer epithelium"><span>Эпителий</span></div>
+        <div className="layer stroma"><span>Строма</span></div>
+        <div className="layer graft"><span>Трансплантат</span></div>
+        <div className="layer endothelium"><span>Эндотелий</span></div>
+        <div className="signalDots"><i/><i/><i/><i/><i/></div>
+      </div>
+      <div className="profileMetrics">
+        <div><span>Барьерная функция</span><b>78%</b><em><i style={{ width: "78%" }} /></em></div>
+        <div><span>Состояние эндотелия</span><b>{endothelial}%</b><em><i style={{ width: `${endothelial}%` }} /></em></div>
+        <div><span>Воспалительная активность</span><b>{inflammation}%</b><em className="warm"><i style={{ width: `${inflammation}%` }} /></em></div>
+      </div>
+    </div>
+  );
+}
+
+function TrendChart({ values }: { values: number[] }) {
+  const points = values.map((v, i) => `${8 + (i / (values.length - 1)) * 84},${92 - v * 0.75}`).join(" ");
+  const area = `8,94 ${points} 92,94`;
+  return (
+    <svg className="trendChart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Динамика риска">
+      <defs>
+        <linearGradient id="lineGradient" x1="0" x2="1"><stop stopColor="#0f766e"/><stop offset="1" stopColor="#38bdf8"/></linearGradient>
+        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#2dd4bf" stopOpacity=".22"/><stop offset="1" stopColor="#2dd4bf" stopOpacity="0"/></linearGradient>
+      </defs>
+      <g className="chartGrid"><line x1="0" y1="25" x2="100" y2="25"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="75" x2="100" y2="75"/></g>
+      <polygon points={area} fill="url(#areaGradient)" />
+      <polyline points={points} fill="none" stroke="url(#lineGradient)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      {values.map((v, i) => <circle key={i} cx={8 + (i / (values.length - 1)) * 84} cy={92 - v * 0.75} r="1.8" />)}
+    </svg>
+  );
+}
+
+export default function Page() {
+  const [selected, setSelected] = useState(0);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [mode, setMode] = useState<"clinical" | "research">("clinical");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const patient = PATIENTS[selected];
+
+  const assessment = useMemo(() => {
+    if (patient.risk >= 65) return "За последние 30 дней отмечается ускорение воспалительной активности. Наибольший вклад в прогноз вносят повышение IL-6 и VEGF, а также снижение плотности эндотелиальных клеток.";
+    if (patient.risk >= 35) return "Выявлена умеренная воспалительная активность без признаков резкого ухудшения. Рекомендуется сократить интервал наблюдения и сопоставить показатели с данными визуализации.";
+    return "Состояние трансплантата стабильное. Биомаркеры и динамика риска остаются в благоприятном диапазоне, признаков активного иммунологического ответа не выявлено.";
+  }, [patient]);
+
+  return (
+    <main className="appShell">
+      <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
+        <div className="brand"><div className="brandMark">A</div><div><strong>AURELIA</strong><span>Clinical Edition</span></div></div>
+        <nav>
+          <button className={mode === "clinical" ? "active" : ""} onClick={() => { setMode("clinical"); setMobileMenu(false); }}><Stethoscope/>Рабочее место</button>
+          <button><Users/>Пациенты</button>
+          <button><History/>Наблюдение</button>
+          <button className={mode === "research" ? "active" : ""} onClick={() => { setMode("research"); setMobileMenu(false); }}><FlaskConical/>Исследования</button>
+          <button><FileText/>Отчёты</button>
+        </nav>
+        <div className="sidebarBottom">
+          <button><CircleHelp/>Справка</button>
+          <button><Settings/>Настройки</button>
+          <div className="doctor"><span>ЕС</span><div><b>Елена Смирнова</b><small>Врач-офтальмолог</small></div></div>
+        </div>
+      </aside>
+
+      <section className="workspace">
+        <header className="topbar">
+          <button className="mobileMenuButton" onClick={() => setMobileMenu(v => !v)}><Menu/></button>
+          <button className="globalSearch" onClick={() => setCommandOpen(true)}><Search/><span>Поиск пациента, отчёта или исследования</span><kbd>⌘ K</kbd></button>
+          <div className="topActions"><span className="systemStatus"><i/>Система работает</span><button className="iconButton"><Bell/></button></div>
+        </header>
+
+        {mode === "clinical" ? (
+          <>
+            <section className="patientHeader">
+              <div className="patientMain">
+                <div className="patientAvatar">{patient.initials}</div>
+                <div>
+                  <div className="patientMeta"><span>{patient.id}</span><i/>Последний визит: {patient.visitDate}</div>
+                  <h1>{patient.name}</h1>
+                  <p>{patient.age} лет · {patient.eye} · {patient.procedure}</p>
+                </div>
+              </div>
+              <div className="patientPicker">{PATIENTS.map((p, i) => <button key={p.id} className={i === selected ? "selected" : ""} onClick={() => setSelected(i)}>{p.initials}</button>)}</div>
+              <button className="primaryButton"><FileText/>Сформировать отчёт</button>
+            </section>
+
+            <section className="summaryStrip">
+              <div><span>Дата операции</span><strong>{patient.operationDate}</strong></div>
+              <div><span>После операции</span><strong>{patient.day} дней</strong></div>
+              <div><span>Лечащий врач</span><strong>{patient.doctor}</strong></div>
+              <div><span>Достоверность прогноза</span><strong>{patient.confidence}%</strong></div>
+            </section>
+
+            <div className="clinicalGrid">
+              <section className="panel riskPanel">
+                <div className="panelHeader"><div><span className="eyebrow">ТЕКУЩАЯ ОЦЕНКА</span><h2>Риск отторжения</h2></div><Gauge/></div>
+                <RiskArc value={patient.risk}/>
+                <div className="riskTrend"><span>Изменение за 30 дней</span><strong className={patient.trend > 0 ? "up" : "down"}>{patient.trend > 0 ? "+" : ""}{patient.trend}%</strong></div>
+              </section>
+
+              <section className="panel profilePanel">
+                <div className="panelHeader"><div><span className="eyebrow">ЦИФРОВОЙ ПРОФИЛЬ</span><h2>Состояние трансплантата</h2></div><Microscope/></div>
+                <CorneaProfile risk={patient.risk}/>
+              </section>
+
+              <section className="panel insightPanel">
+                <div className="panelHeader"><div><span className="eyebrow">КЛИНИЧЕСКОЕ ЗАКЛЮЧЕНИЕ</span><h2>Оценка системы</h2></div><BrainCircuit/></div>
+                <p className="assessment">{assessment}</p>
+                <div className="drivers">
+                  <span>Ключевые факторы</span>
+                  <div><b>IL-6</b><em>повышен</em></div>
+                  <div><b>VEGF</b><em>повышен</em></div>
+                  <div><b>Плотность эндотелия</b><em>снижается</em></div>
+                </div>
+                <div className="recommendation"><Sparkles/><div><span>Рекомендуемое действие</span><b>{patient.risk >= 65 ? "Контроль через 14 дней" : patient.risk >= 35 ? "Контроль через 30 дней" : "Плановый контроль через 3 месяца"}</b></div><ChevronRight/></div>
+              </section>
+            </div>
+
+            <section className="panel timelinePanel">
+              <div className="panelHeader"><div><span className="eyebrow">ДИНАМИКА НАБЛЮДЕНИЯ</span><h2>История риска</h2></div><button className="ghostButton">Все визиты <ArrowRight/></button></div>
+              <div className="timelineContent">
+                <div className="chartWrap"><TrendChart values={patient.history}/><div className="chartLabels"><span>Операция</span><span>1 мес.</span><span>3 мес.</span><span>6 мес.</span><span>9 мес.</span><span>12 мес.</span><span>Сегодня</span></div></div>
+                <div className="latestVisit"><span>Последнее измерение</span><strong>{patient.risk}%</strong><p>Риск увеличился на {Math.abs(patient.trend)}% за последние 30 дней.</p><button>Открыть визит <ChevronRight/></button></div>
+              </div>
+            </section>
+
+            <section className="biomarkerSection">
+              <div className="sectionTitle"><div><span className="eyebrow">ЛАБОРАТОРНЫЕ ДАННЫЕ</span><h2>Биомаркеры</h2></div><button className="ghostButton"><CalendarDays/>14 мая 2026</button></div>
+              <div className="biomarkerGrid">{patient.markers.map(marker => (
+                <article key={marker.name} className={`biomarkerCard ${marker.status}`}>
+                  <div className="markerTop"><span>{marker.name}</span><i/></div>
+                  <strong>{marker.value}<small>{marker.unit}</small></strong>
+                  <div className="markerBottom"><span>к прошлому визиту</span><b>{marker.delta}</b></div>
+                </article>
+              ))}</div>
+            </section>
+
+            <section className="planPanel">
+              <div><span className="eyebrow">ПЛАН НАБЛЮДЕНИЯ</span><h2>Следующие действия</h2><p>Рекомендации сформированы на основании клинических данных и прогноза модели.</p></div>
+              <div className="checklist">
+                <div><i><Check/></i><span><b>Повторная оценка IL-6 и VEGF</b><small>через 14 дней</small></span></div>
+                <div><i><Check/></i><span><b>Спекулярная микроскопия</b><small>оценка плотности эндотелия</small></span></div>
+                <div><i><Check/></i><span><b>Осмотр офтальмолога</b><small>контроль состояния трансплантата</small></span></div>
+              </div>
+            </section>
+          </>
+        ) : <ResearchView/>}
+      </section>
+
+      {commandOpen && <div className="overlay" onClick={() => setCommandOpen(false)}><div className="commandPalette" onClick={e => e.stopPropagation()}><div className="commandInput"><Search/><input autoFocus placeholder="Введите имя пациента или команду…"/><button onClick={() => setCommandOpen(false)}><X/></button></div><div className="commandItems"><span>БЫСТРЫЕ ДЕЙСТВИЯ</span>{["Открыть карту пациента", "Сравнить последние визиты", "Сформировать клинический отчёт", "Открыть исследовательский модуль", "Экспортировать данные когорты"].map((item, i) => <button key={item}><i>{i + 1}</i><b>{item}</b><ChevronRight/></button>)}</div></div></div>}
+    </main>
+  );
+}
+
+function ResearchView() {
+  return (
+    <section className="researchView">
+      <div className="researchHero"><div><span className="eyebrow">ИССЛЕДОВАТЕЛЬСКИЙ МОДУЛЬ</span><h1>Аналитика модели</h1><p>Оценка дискриминационной способности, калибровки и клинической полезности модели прогнозирования.</p></div><button className="primaryButton"><FileText/>Экспорт отчёта</button></div>
+      <div className="metricGrid">
+        <article><span>AUROC</span><strong>0,91</strong><small>95% ДИ: 0,87–0,94</small></article>
+        <article><span>Чувствительность</span><strong>86%</strong><small>при пороге 0,42</small></article>
+        <article><span>Специфичность</span><strong>82%</strong><small>валидационная выборка</small></article>
+        <article><span>Brier score</span><strong>0,11</strong><small>хорошая калибровка</small></article>
+      </div>
+      <div className="researchCharts">
+        <article className="panel"><div className="panelHeader"><div><span className="eyebrow">КАЧЕСТВО МОДЕЛИ</span><h2>ROC-кривая</h2></div><ShieldCheck/></div><svg viewBox="0 0 320 220"><line className="axisLine" x1="35" y1="190" x2="300" y2="190"/><line className="axisLine" x1="35" y1="20" x2="35" y2="190"/><line className="diagLine" x1="35" y1="190" x2="300" y2="20"/><path className="rocLine" d="M35 190 C45 115, 75 65, 128 43 C183 21, 246 20, 300 20"/></svg><div className="chartCaption"><span>Ложноположительная доля</span><b>AUROC 0,91</b></div></article>
+        <article className="panel"><div className="panelHeader"><div><span className="eyebrow">КЛИНИЧЕСКАЯ ИНТЕРПРЕТАЦИЯ</span><h2>Важность признаков</h2></div><Activity/></div><div className="featureList">{[["IL-6",92],["VEGF",81],["Плотность эндотелия",68],["Эпизод отторжения",56],["Толщина роговицы",43]].map(([name, value]) => <div key={String(name)}><span>{name}</span><em><i style={{width:`${value}%`}}/></em><b>{value}%</b></div>)}</div></article>
+      </div>
+    </section>
+  );
+}
