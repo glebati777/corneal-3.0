@@ -114,114 +114,112 @@ function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number
 
 
 function drawEyeModel(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
-  const cx=w*.49, cy=h*.51, R=Math.min(w,h)*.39;
-  const targetX=((px||.5)-.5)*R*.28, targetY=((py||.5)-.5)*R*.16;
-  const microX=Math.sin(t*1.9)*R*.008+Math.sin(t*.47)*R*.005;
-  const microY=Math.cos(t*1.4)*R*.006;
-  const lookX=targetX+microX, lookY=targetY+microY;
-  const pulse=.5+.5*Math.sin(t*1.35);
-  const blinkCycle=(t*.18)%1;
-  const blink=blinkCycle>.94?Math.sin((blinkCycle-.94)/.06*Math.PI):0;
+  const cx=w*.5, cy=h*.505, R=Math.min(w,h)*.365;
+  const lookX=((px||.5)-.5)*R*.16+Math.sin(t*.7)*R*.006;
+  const lookY=((py||.5)-.5)*R*.09+Math.cos(t*.9)*R*.004;
+  const ix=cx+lookX, iy=cy+lookY;
+  const blinkCycle=(t*.115)%1;
+  const blink=blinkCycle>.965?Math.sin((blinkCycle-.965)/.035*Math.PI):0;
+  const aperture=R*(.61-blink*.55);
 
-  const bg=ctx.createRadialGradient(cx,cy,R*.08,cx,cy,R*1.8);
-  bg.addColorStop(0,'#183b47');bg.addColorStop(.46,'#0a2029');bg.addColorStop(1,'#030b10');
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#101820');bg.addColorStop(.55,'#081117');bg.addColorStop(1,'#04080b');
   ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
 
-  // soft clinical halo and orbital shadow
-  const halo=ctx.createRadialGradient(cx,cy,R*.58,cx,cy,R*1.55);
-  halo.addColorStop(0,'rgba(87,218,204,.16)');halo.addColorStop(1,'rgba(87,218,204,0)');
-  ctx.fillStyle=halo;ctx.beginPath();ctx.ellipse(cx,cy,R*1.52,R*1.18,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(cx,cy+R*.11,R*1.28,R*.93,0,0,Math.PI*2);ctx.fill();
+  // orbital tissue — neutral, photographic palette rather than neon illustration
+  const skin=ctx.createRadialGradient(cx-R*.18,cy-R*.25,R*.2,cx,cy,R*1.55);
+  skin.addColorStop(0,'#c9a79b');skin.addColorStop(.42,'#9a776e');skin.addColorStop(.78,'#604a48');skin.addColorStop(1,'#211d20');
+  ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(cx,cy,R*1.55,R*1.08,0,0,Math.PI*2);ctx.fill();
+  const socket=ctx.createRadialGradient(cx,cy,R*.5,cx,cy,R*1.35);
+  socket.addColorStop(0,'rgba(0,0,0,0)');socket.addColorStop(.72,'rgba(0,0,0,.12)');socket.addColorStop(1,'rgba(0,0,0,.72)');
+  ctx.fillStyle=socket;ctx.beginPath();ctx.ellipse(cx,cy,R*1.52,R*1.05,0,0,Math.PI*2);ctx.fill();
 
-  // anatomically shaped sclera visible through eyelid aperture
   ctx.save();
   ctx.beginPath();
-  ctx.moveTo(cx-R*1.34,cy);
-  ctx.bezierCurveTo(cx-R*.95,cy-R*.72,cx+R*.91,cy-R*.72,cx+R*1.34,cy);
-  ctx.bezierCurveTo(cx+R*.92,cy+R*.69,cx-R*.94,cy+R*.69,cx-R*1.34,cy);
+  ctx.moveTo(cx-R*1.35,cy);
+  ctx.bezierCurveTo(cx-R*.82,cy-aperture,cx+R*.86,cy-aperture,cx+R*1.35,cy);
+  ctx.bezierCurveTo(cx+R*.88,cy+aperture*.92,cx-R*.86,cy+aperture*.92,cx-R*1.35,cy);
   ctx.closePath();ctx.clip();
-  const scl=ctx.createRadialGradient(cx-R*.34,cy-R*.34,R*.06,cx,cy,R*1.25);
-  scl.addColorStop(0,'#ffffff');scl.addColorStop(.48,'#e8f2f4');scl.addColorStop(.82,'#c5d8dd');scl.addColorStop(1,'#78949e');
-  ctx.fillStyle=scl;ctx.fillRect(cx-R*1.4,cy-R, R*2.8,R*2);
 
-  // subtle scleral vessels
-  for(let i=0;i<28;i++){
-    const side=i%2===0?-1:1; const yy=cy-R*.52+(i%14)*R*.08;
-    const startX=cx+side*R*.58;
-    ctx.strokeStyle=`rgba(170,65,82,${.06+(i%4)*.018})`;ctx.lineWidth=.65+(i%3)*.2;
-    ctx.beginPath();ctx.moveTo(startX,yy);
-    ctx.bezierCurveTo(cx+side*R*.79,yy+Math.sin(i)*R*.05,cx+side*R*1.04,yy-Math.cos(i)*R*.08,cx+side*R*1.28,yy+Math.sin(i*.7)*R*.06);ctx.stroke();
+  // sclera with wet surface and natural peripheral shadow
+  const scl=ctx.createRadialGradient(cx-R*.28,cy-R*.22,R*.05,cx,cy,R*1.4);
+  scl.addColorStop(0,'#fffefa');scl.addColorStop(.42,'#f4f4ef');scl.addColorStop(.72,'#d9dedb');scl.addColorStop(1,'#879397');
+  ctx.fillStyle=scl;ctx.fillRect(cx-R*1.45,cy-R, R*2.9,R*2);
+  const limbalShade=ctx.createRadialGradient(ix,iy,R*.49,ix,iy,R*.72);
+  limbalShade.addColorStop(0,'rgba(50,70,72,0)');limbalShade.addColorStop(.72,'rgba(42,63,66,.14)');limbalShade.addColorStop(1,'rgba(21,35,39,.62)');
+  ctx.fillStyle=limbalShade;ctx.beginPath();ctx.arc(ix,iy,R*.71,0,Math.PI*2);ctx.fill();
+
+  // fine conjunctival vessels, intentionally low contrast
+  for(let i=0;i<34;i++){
+    const side=i%2?-1:1, yy=cy-R*.51+(i%17)*R*.061;
+    ctx.strokeStyle=`rgba(134,55,61,${.035+(i%5)*.012})`;ctx.lineWidth=.45+(i%3)*.18;
+    ctx.beginPath();ctx.moveTo(cx+side*R*.67,yy);
+    ctx.bezierCurveTo(cx+side*R*.86,yy+Math.sin(i)*R*.03,cx+side*R*1.08,yy-Math.cos(i*.7)*R*.05,cx+side*R*1.31,yy+Math.sin(i*.5)*R*.035);ctx.stroke();
   }
 
-  const ix=cx+lookX, iy=cy+lookY;
-  // limbal ring gives the cornea depth
-  const limbus=ctx.createRadialGradient(ix,iy,R*.48,ix,iy,R*.67);
-  limbus.addColorStop(0,'rgba(34,73,78,0)');limbus.addColorStop(.72,'rgba(26,70,74,.20)');limbus.addColorStop(1,'rgba(17,45,52,.72)');
-  ctx.fillStyle=limbus;ctx.beginPath();ctx.arc(ix,iy,R*.67,0,Math.PI*2);ctx.fill();
-
-  // iris base with depth
-  const iris=ctx.createRadialGradient(ix-R*.10,iy-R*.12,R*.03,ix,iy,R*.52);
-  iris.addColorStop(0,'#071114');iris.addColorStop(.17,'#113835');iris.addColorStop(.44,'#2c756d');iris.addColorStop(.72,'#6da89a');iris.addColorStop(1,'#16383e');
-  ctx.fillStyle=iris;ctx.beginPath();ctx.arc(ix,iy,R*.51,0,Math.PI*2);ctx.fill();
-
-  // crypts and radial iris fibers
-  for(let i=0;i<220;i++){
-    const a=i/220*Math.PI*2;
-    const inner=R*(.145+.015*Math.sin(i*2.1));
-    const outer=R*(.47+.025*Math.sin(i*5.7+t*.12));
-    const bend=.025*Math.sin(i*.83);
-    ctx.strokeStyle=i%13===0?'rgba(241,205,129,.34)':i%4===0?'rgba(190,235,215,.21)':'rgba(19,79,73,.42)';
-    ctx.lineWidth=i%11===0?1.25:.55;
+  // iris: layered, irregular and subdued
+  const irisR=R*.505;
+  const iris=ctx.createRadialGradient(ix-R*.08,iy-R*.1,R*.02,ix,iy,irisR);
+  iris.addColorStop(0,'#06100f');iris.addColorStop(.19,'#26382f');iris.addColorStop(.46,'#6f7553');iris.addColorStop(.72,'#4d634d');iris.addColorStop(1,'#182a29');
+  ctx.fillStyle=iris;ctx.beginPath();ctx.arc(ix,iy,irisR,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<360;i++){
+    const a=i/360*Math.PI*2;
+    const inner=R*(.15+.012*Math.sin(i*1.73));
+    const outer=R*(.47+.018*Math.sin(i*5.17));
+    const mid=R*(.27+.025*Math.sin(i*.39));
+    ctx.strokeStyle=i%17===0?'rgba(219,191,125,.22)':i%5===0?'rgba(173,184,139,.17)':'rgba(28,45,37,.32)';
+    ctx.lineWidth=i%19===0?1.05:.45;
     ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*inner,iy+Math.sin(a)*inner);
-    ctx.quadraticCurveTo(ix+Math.cos(a+bend)*R*.31,iy+Math.sin(a+bend)*R*.31,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
+    ctx.quadraticCurveTo(ix+Math.cos(a+.018*Math.sin(i))*mid,iy+Math.sin(a+.018*Math.sin(i))*mid,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
   }
-  for(let i=0;i<18;i++){
-    const a=i/18*Math.PI*2+.13; const rr=R*(.25+(i%3)*.045);
-    ctx.fillStyle='rgba(4,28,28,.34)';ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*.035,R*.012,a,0,Math.PI*2);ctx.fill();
-  }
+  // collarette and crypts
+  ctx.strokeStyle='rgba(199,180,123,.26)';ctx.lineWidth=1.25;ctx.beginPath();ctx.arc(ix,iy,R*.255,0,Math.PI*2);ctx.stroke();
+  for(let i=0;i<26;i++){const a=i/26*Math.PI*2+.2,rr=R*(.28+(i%4)*.035);ctx.fillStyle='rgba(12,21,18,.32)';ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*.028,R*.009,a,0,Math.PI*2);ctx.fill()}
 
-  // pupil with pupillary ruff
-  const pr=R*(.145+.012*Math.sin(t*.72));
-  ctx.strokeStyle='rgba(202,181,116,.44)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(ix,iy,pr*1.08,0,Math.PI*2);ctx.stroke();
-  const pupil=ctx.createRadialGradient(ix-R*.025,iy-R*.03,2,ix,iy,pr);
-  pupil.addColorStop(0,'#000');pupil.addColorStop(.72,'#010304');pupil.addColorStop(1,'#071014');ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
+  const pr=R*(.142+.006*Math.sin(t*.35));
+  ctx.strokeStyle='rgba(76,62,42,.7)';ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(ix,iy,pr*1.08,0,Math.PI*2);ctx.stroke();
+  const pupil=ctx.createRadialGradient(ix-R*.02,iy-R*.02,1,ix,iy,pr);
+  pupil.addColorStop(0,'#000');pupil.addColorStop(.85,'#020303');pupil.addColorStop(1,'#101310');ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
 
-  // transparent corneal dome and anterior chamber reflection
-  const cor=ctx.createRadialGradient(ix-R*.24,iy-R*.30,R*.02,ix,iy,R*.70);
-  cor.addColorStop(0,'rgba(255,255,255,.46)');cor.addColorStop(.16,'rgba(213,252,249,.16)');cor.addColorStop(.60,'rgba(90,213,208,.035)');cor.addColorStop(1,'rgba(66,176,180,.18)');
-  ctx.fillStyle=cor;ctx.beginPath();ctx.arc(ix,iy,R*.68,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(139,239,230,.44)';ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(ix,iy,R*.68,0,Math.PI*2);ctx.stroke();
+  // corneal dome, tear film and optical highlights
+  const cor=ctx.createRadialGradient(ix-R*.21,iy-R*.27,R*.03,ix,iy,R*.71);
+  cor.addColorStop(0,'rgba(255,255,255,.43)');cor.addColorStop(.12,'rgba(255,255,255,.11)');cor.addColorStop(.52,'rgba(188,220,218,.025)');cor.addColorStop(1,'rgba(111,153,158,.16)');
+  ctx.fillStyle=cor;ctx.beginPath();ctx.arc(ix,iy,R*.69,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(215,238,235,.22)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(ix,iy,R*.69,0,Math.PI*2);ctx.stroke();
 
-  // graft disc boundary, sutures and edema sector
-  ctx.strokeStyle='rgba(74,231,211,.94)';ctx.lineWidth=2.3;ctx.setLineDash([8,7]);ctx.beginPath();ctx.arc(ix,iy,R*.57,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-  for(let i=0;i<16;i++){
-    const a=i/16*Math.PI*2;ctx.strokeStyle='rgba(159,232,222,.45)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*R*.55,iy+Math.sin(a)*R*.55);ctx.lineTo(ix+Math.cos(a)*R*.64,iy+Math.sin(a)*R*.64);ctx.stroke();
-  }
-  const hx=ix+R*.28, hy=iy-R*.18;
-  const hg=ctx.createRadialGradient(hx,hy,R*.01,hx,hy,R*(.17+.025*pulse));
-  hg.addColorStop(0,'rgba(255,112,139,.82)');hg.addColorStop(.30,'rgba(246,103,128,.38)');hg.addColorStop(1,'rgba(246,103,128,0)');
-  ctx.fillStyle=hg;ctx.beginPath();ctx.arc(hx,hy,R*.22,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=`rgba(255,149,166,${.45+.25*pulse})`;ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(hx,hy,R*(.105+.018*pulse),0,Math.PI*2);ctx.stroke();
+  // realistic graft boundary: subtle trephination scar and interrupted sutures
+  ctx.strokeStyle='rgba(210,224,218,.34)';ctx.lineWidth=1.1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(ix,iy,R*.57,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2+.04;ctx.strokeStyle='rgba(196,210,205,.26)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*R*.545,iy+Math.sin(a)*R*.545);ctx.lineTo(ix+Math.cos(a)*R*.625,iy+Math.sin(a)*R*.625);ctx.stroke()}
 
-  // multiple realistic corneal highlights
-  ctx.fillStyle='rgba(255,255,255,.86)';ctx.beginPath();ctx.ellipse(ix-R*.23,iy-R*.28,R*.13,R*.052,-.55,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.34)';ctx.beginPath();ctx.ellipse(ix+R*.25,iy+R*.21,R*.07,R*.028,-.55,0,Math.PI*2);ctx.fill();
+  // restrained clinical overlay at superior-temporal graft, not a cartoon glow
+  const hx=ix+R*.28,hy=iy-R*.2;
+  const edema=ctx.createRadialGradient(hx,hy,0,hx,hy,R*.19);
+  edema.addColorStop(0,'rgba(184,87,92,.18)');edema.addColorStop(.55,'rgba(170,75,80,.07)');edema.addColorStop(1,'rgba(170,75,80,0)');
+  ctx.fillStyle=edema;ctx.beginPath();ctx.arc(hx,hy,R*.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(219,143,139,.38)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(hx,hy,R*.09,0,Math.PI*2);ctx.stroke();
+
+  // specular reflections and tear meniscus
+  ctx.fillStyle='rgba(255,255,255,.84)';ctx.beginPath();ctx.ellipse(ix-R*.23,iy-R*.29,R*.112,R*.035,-.58,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(ix+R*.23,iy+R*.19,R*.055,R*.018,-.55,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(246,255,255,.34)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(ix,iy,R*.655,.17*Math.PI,.83*Math.PI);ctx.stroke();
   ctx.restore();
 
-  // eyelid margins and animated blink
-  const lidClose=blink*R*.62;
-  ctx.fillStyle='#101a1f';
-  ctx.beginPath();ctx.moveTo(cx-R*1.42,cy-R*.03+lidClose*.10);ctx.bezierCurveTo(cx-R*.88,cy-R*.82+lidClose,cx+R*.90,cy-R*.82+lidClose,cx+R*1.42,cy-R*.03+lidClose*.10);ctx.lineTo(cx+R*1.48,cy-R*1.18);ctx.lineTo(cx-R*1.48,cy-R*1.18);ctx.closePath();ctx.fill();
-  ctx.beginPath();ctx.moveTo(cx-R*1.42,cy+R*.03-lidClose*.10);ctx.bezierCurveTo(cx-R*.86,cy+R*.76-lidClose,cx+R*.88,cy+R*.76-lidClose,cx+R*1.42,cy+R*.03-lidClose*.10);ctx.lineTo(cx+R*1.48,cy+R*1.18);ctx.lineTo(cx-R*1.48,cy+R*1.18);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(170,123,112,.72)';ctx.lineWidth=2.1;
-  ctx.beginPath();ctx.moveTo(cx-R*1.35,cy);ctx.bezierCurveTo(cx-R*.82,cy-R*.69+lidClose,cx+R*.84,cy-R*.69+lidClose,cx+R*1.35,cy);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx-R*1.35,cy);ctx.bezierCurveTo(cx-R*.82,cy+R*.65-lidClose,cx+R*.84,cy+R*.65-lidClose,cx+R*1.35,cy);ctx.stroke();
+  // lids with skin texture, margin and sparse lashes
+  const close=blink*R*.58;
+  const upper=cy-R*.04+close, lower=cy+R*.035-close*.86;
+  const lidGrad=ctx.createLinearGradient(0,cy-R,0,cy+R);lidGrad.addColorStop(0,'#6b504d');lidGrad.addColorStop(.5,'#9b756c');lidGrad.addColorStop(1,'#4a393b');
+  ctx.fillStyle=lidGrad;
+  ctx.beginPath();ctx.moveTo(cx-R*1.46,upper);ctx.bezierCurveTo(cx-R*.85,cy-R*.72+close,cx+R*.86,cy-R*.72+close,cx+R*1.46,upper);ctx.lineTo(cx+R*1.55,cy-R*1.15);ctx.lineTo(cx-R*1.55,cy-R*1.15);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-R*1.46,lower);ctx.bezierCurveTo(cx-R*.86,cy+R*.66-close*.86,cx+R*.88,cy+R*.66-close*.86,cx+R*1.46,lower);ctx.lineTo(cx+R*1.55,cy+R*1.16);ctx.lineTo(cx-R*1.55,cy+R*1.16);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(62,37,39,.72)';ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.moveTo(cx-R*1.35,upper);ctx.bezierCurveTo(cx-R*.8,cy-R*.64+close,cx+R*.82,cy-R*.64+close,cx+R*1.35,upper);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-R*1.35,lower);ctx.bezierCurveTo(cx-R*.82,cy+R*.59-close*.86,cx+R*.84,cy+R*.59-close*.86,cx+R*1.35,lower);ctx.stroke();
+  if(blink<.55){for(let i=0;i<18;i++){const q=i/17, x=cx-R*1.05+q*R*2.1, y=cy-R*(.48-.12*Math.pow((q-.5)*2,2));ctx.strokeStyle='rgba(28,22,23,.46)';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(q-.5)*R*.03,y-R*(.055+(i%3)*.01));ctx.stroke()}}
 
-  // HUD
-  label(ctx,'DIGITAL EYE TWIN 3.0 · ANTERIOR SEGMENT',26,30);
-  label(ctx,'Граница трансплантата · активный сектор отмечен',26,h-24);
-  label(ctx,'72% РИСК',w-28,32,'right');
+  // minimal clinical labels, visually separated from anatomy
+  label(ctx,'DIGITAL EYE TWIN 4.0 · PHOTOREALISTIC ANTERIOR SEGMENT',24,28);
+  label(ctx,'Синтетическая визуализация · трансплантат PKP · OD',24,h-22);
+  label(ctx,'РИСК 72%',w-24,28,'right');
 }
 function drawBiofield(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
   grid(ctx,w,h); const cx=w*.48,cy=h*.5; const R=Math.min(w,h)*.31;
@@ -375,7 +373,7 @@ function WorldClassTwin({onOpen}:{onOpen:()=>void}){
   const simulatedRisk=Math.max(18,Math.round(patient.risk-(adherence*.18+therapy*.16+monitoring*.08-18)));
   useEffect(()=>{if(!playing)return;const id=window.setInterval(()=>setTime(v=>v>=10?0:v+1),650);return()=>window.clearInterval(id)},[playing]);
   return <section className={`worldTwin ${fullscreen?"fullscreen":""}`}>
-    <div className="twinHeader"><div><span className="eyebrow">AURELIA CLINICAL INTELLIGENCE 3.0 · DIGITAL EYE TWIN</span><h2>Живая модель глаза и трансплантата</h2><p>Крупная анатомическая модель, четыре ключевых показателя и один следующий клинический шаг — без информационного шума.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(10);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
+    <div className="twinHeader"><div><span className="eyebrow">AURELIA CLINICAL INTELLIGENCE 4.0 · DIGITAL EYE TWIN</span><h2>Живая модель глаза и трансплантата</h2><p>Фотореалистичная модель переднего отрезка, четыре ключевых показателя и один следующий клинический шаг — без информационного шума.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(10);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
     <div className="modeRail">{twinModes.map(({id,label,icon:Icon})=><button key={id} className={mode===id?"active":""} onClick={()=>setMode(id)}><Icon/><span>{label}</span></button>)}</div>
     <div className="twinBody"><div className={`visualStage ${compare?"compareOn":""}`}><DigitalTwin mode={mode} time={time} selected={selected} onSelect={setSelected}/><div className="stageBadge"><i/><span>{compare?"Сравнение: +30 дней":"Модель синхронизирована"}</span><b>14.05.2026</b></div><div className="modelTelemetry"><span><i/> AS-OCT 14.05.2026</span><span><i/> ECD 1820 кл/мм²</span><span><i/> CCT 565 µm</span></div>{compare&&<div className="comparisonCard"><span>Изменение с прошлого визита</span><strong>+14%</strong><small>IL-6 ↑18% · VEGF-A ↑11% · ECD ↓7%</small></div>}</div>
       <aside className="inspector"><span className="eyebrow">{mode==="simulation"?"CLINICAL SCENARIO ENGINE":"КЛИНИЧЕСКИЙ СИГНАЛ"}</span><h3>{mode==="network"?signal.name:mode==="fusion"?"Глаз и зона трансплантата":mode==="forecast"?"Прогноз при наблюдении":mode==="simulation"?"Персональный сценарий":mode==="explorer"?"Слои роговицы":"Риск отторжения"}</h3><div className="inspectorValue"><strong>{mode==="network"?signal.value:mode==="forecast"?43:mode==="simulation"?simulatedRisk:mode==="explorer"?5:mode==="fusion"?patient.risk:patient.risk}</strong><span>{mode==="network"?signal.unit:mode==="explorer"?"слоёв":mode==="fusion"?"%":"%"}</span></div>
@@ -414,7 +412,32 @@ function VisitDrawer({patientName,close,onSelect}:{patientName:string;close:()=>
   return <div className="drawerBackdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}><section className="visitDrawer" role="dialog" aria-modal="true" aria-label="История визитов"><header><div><span className="eyebrow">LONGITUDINAL PATIENT RECORD</span><h2>История визитов · {patientName}</h2><p>Выбор визита синхронно обновляет OCT, эндотелий, пахиметрию и оценку риска.</p></div><button onClick={close}><X/></button></header><div className="visitWorkspace"><nav className="visitList">{visits.map((item,i)=><button key={item.date} className={active===i?"active":""} onClick={()=>{setActive(i);onSelect(i)}}><i/><div><b>{item.date}</b><span>{item.day} · {item.status}</span></div><strong>{item.risk}%</strong><ChevronRight/></button>)}</nav><div className="visitDetail"><div className="visitMetrics"><article><span>AI-риск</span><strong>{v.risk}%</strong><small>{active===0?"+9 п.п. к визиту":"Архивная оценка"}</small></article><article><span>CCT</span><strong>{v.cct}</strong><small>мкм</small></article><article><span>ECD</span><strong>{v.ecd}</strong><small>кл/мм²</small></article><article><span>IL-6</span><strong>{v.il6}</strong><small>пг/мл</small></article></div><div className="visitStudy"><div className="miniOct"><span>AS-OCT · {v.date}</span><svg viewBox="0 0 520 190" role="img" aria-label="Синтетический OCT-срез"><defs><linearGradient id="tissue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#d9faf6" stopOpacity=".9"/><stop offset="1" stopColor="#42aeb4" stopOpacity=".2"/></linearGradient></defs><path d={`M18 112 Q260 ${40-active*2} 502 112 L502 ${145+active*3} Q260 ${95+active*3} 18 ${145+active*3} Z`} fill="url(#tissue)"/><path d={`M18 112 Q260 ${40-active*2} 502 112`} fill="none" stroke="#eafffb" strokeWidth="4"/><path d={`M18 ${145+active*3} Q260 ${95+active*3} 502 ${145+active*3}`} fill="none" stroke="#6fd6cf" strokeWidth="2"/><line x1="260" y1="50" x2="260" y2="135" stroke="#f2c66d" strokeDasharray="4 4"/><text x="270" y="90" fill="#f2d88e" fontSize="11">{v.cct} µm</text></svg></div><div className="visitNarrative"><span className="eyebrow">КЛИНИЧЕСКОЕ РЕЗЮМЕ</span><h3>{v.status}</h3><p>{active===0?"Согласованное повышение толщины трансплантата, IL-6 и модельного риска при снижении эндотелиального резерва.":"Архивная точка продольной траектории. Данные сохранены для сравнения и анализа скорости изменений."}</p><button className="darkButton" onClick={()=>{onSelect(active);close()}}>Открыть визит в цифровом двойнике<ArrowUpRight/></button></div></div></div></div></section></div>
 }
 
-function Patients({notify}:{notify:(s:string)=>void}){const [active,setActive]=useState(0);const [visits,setVisits]=useState(false);const [visitIndex,setVisitIndex]=useState(0);const [action,setAction]=useState<string|null>(null);const list=[patient,{...patient,id:"CR-0241",name:"Петрова Анна Сергеевна",risk:19,status:"Стабильно"},{...patient,id:"CR-0196",name:"Кузнецов Михаил Олегович",risk:41,status:"Наблюдение"}];const p=list[active];return <><div className="split"><section className="panel"><div className="sectionTitle"><div><span className="eyebrow">РЕЕСТР</span><h2>Пациенты</h2></div><button className="darkButton small" onClick={()=>setAction("add")}><Plus/>Добавить</button></div>{list.map((item,i)=><button className={`patientRow ${i===active?"active":""}`} key={item.id} onClick={()=>setActive(i)}><span>{item.name.split(" ").slice(0,2).map(s=>s[0]).join("")}</span><div><b>{item.name}</b><small>{item.id} · {item.procedure}</small></div><em>{item.risk}%</em><ChevronRight/></button>)}</section><section className="panel detail"><div className="sectionTitle"><div><span className="eyebrow">КАРТА ПАЦИЕНТА</span><h2>{p.name}</h2></div><button className="iconText" onClick={()=>setAction("edit")}><SlidersHorizontal/>Редактировать</button></div><p>{p.procedure}, {p.eye}</p><div className="facts"><div><span>Дата операции</span><b>{p.operationDate}</b></div><div><span>Лечащий врач</span><b>{p.doctor}</b></div><div><span>Риск</span><b>{p.risk}%</b></div><div><span>Достоверность</span><b>{p.confidence}%</b></div></div><div className="clinicalNote"><Stethoscope/><div><b>Клинический статус</b><p>{p.status}. Последняя открытая точка: визит {visitIndex+1}.</p></div></div><div className="quickGrid"><button onClick={()=>setVisits(true)}><CalendarDays/><span>Визиты</span><ChevronRight/></button><button onClick={()=>setAction("studies")}><Microscope/><span>Исследования</span><ChevronRight/></button><button onClick={()=>setAction("docs")}><FileText/><span>Документы</span><ChevronRight/></button></div></section></div>{visits&&<VisitDrawer patientName={p.name} close={()=>setVisits(false)} onSelect={setVisitIndex}/>} {action&&<Modal title={action==="add"?"Новый пациент":action==="edit"?"Редактирование карты":action==="studies"?"Исследования пациента":"Документы пациента"} close={()=>setAction(null)}>{action==="add"||action==="edit"?<div className="formGrid"><label>ФИО<input defaultValue={action==="edit"?p.name:""} placeholder="Фамилия Имя Отчество"/></label><label>ID пациента<input defaultValue={action==="edit"?p.id:""} placeholder="CR-0000"/></label><label>Процедура<select defaultValue={p.procedure}><option>Сквозная кератопластика</option><option>DMEK</option><option>DSAEK</option></select></label><label>Глаз<select defaultValue={p.eye}><option>OD</option><option>OS</option></select></label><button className="darkButton" onClick={()=>{notify(action==="add"?"Пациент добавлен в демонстрационный реестр":"Изменения карты сохранены");setAction(null)}}><Save/>Сохранить</button></div>:action==="studies"?<div className="studyList">{[["AS-OCT","14.05.2026","565 µm"],["Спекулярная микроскопия","14.05.2026","ECD 1820"],["Пахиметрия","14.05.2026","Δ +28 µm"]].map(x=><button key={x[0]} onClick={()=>notify(`${x[0]} открыто`)}><Microscope/><div><b>{x[0]}</b><span>{x[1]}</span></div><strong>{x[2]}</strong><ChevronRight/></button>)}</div>:<div className="studyList">{[["Клиническое заключение","PDF · 1,2 МБ"],["Протокол операции","PDF · 840 КБ"],["Согласие пациента","PDF · 320 КБ"]].map(x=><button key={x[0]} onClick={()=>notify(`${x[0]} подготовлен к просмотру`)}><FileText/><div><b>{x[0]}</b><span>{x[1]}</span></div><ChevronRight/></button>)}</div>}</Modal>}</>}
+
+type ClinicalDocumentId = "conclusion" | "operation" | "consent";
+
+const clinicalDocuments:{id:ClinicalDocumentId;title:string;meta:string;date:string;summary:string}[]=[
+  {id:"conclusion",title:"Клиническое заключение",meta:"HTML · готово к печати / PDF",date:"14.05.2026",summary:"Структурированное офтальмологическое заключение с результатами исследований и планом."},
+  {id:"operation",title:"Протокол операции",meta:"HTML · готово к печати / PDF",date:"12.04.2025",summary:"Демонстрационный протокол сквозной кератопластики с этапами и послеоперационными назначениями."},
+  {id:"consent",title:"Информированное согласие",meta:"HTML · готово к печати / PDF",date:"11.04.2025",summary:"Учебный шаблон согласия: цель, альтернативы, риски, наблюдение и признаки отторжения."}
+];
+
+function documentHtml(id:ClinicalDocumentId){
+ const common=`<div class="notice"><b>УЧЕБНЫЙ ДЕМОНСТРАЦИОННЫЙ ДОКУМЕНТ</b><br>Не является официальной медицинской записью, назначением или формой конкретной клиники.</div><div class="patient"><div><small>Пациент</small><b>${patient.name}</b></div><div><small>ID</small><b>${patient.id}</b></div><div><small>Глаз</small><b>${patient.eye}</b></div><div><small>Операция</small><b>${patient.procedure}</b></div></div>`;
+ const sources=`<section><h2>Источники структуры и клинических сведений</h2><ol class="sources"><li>American Academy of Ophthalmology. About Corneal Transplantation.</li><li>NHS. Cornea transplant.</li><li>Moorfields Eye Hospital. Corneal transplantation — penetrating keratoplasty.</li><li>Magalhaes OA et al. Literature review and suggested protocol for prevention and treatment of corneal graft rejection. Eye (2019).</li><li>Mandal S et al. Management and prevention of corneal graft rejection. Indian J Ophthalmol (2023).</li></ol></section>`;
+ let body=''; let title='';
+ if(id==='conclusion'){title='Клиническое заключение';body=`${common}<section><h2>Причина обращения</h2><p>Снижение остроты зрения, эпизоды покраснения и светобоязни правого глаза после сквозной кератопластики.</p></section><section><h2>Объективные данные</h2><table><tr><th>Показатель</th><th>Результат</th><th>Интерпретация</th></tr><tr><td>Острота зрения OD</td><td>0,45</td><td>ниже целевого значения</td></tr><tr><td>ВГД</td><td>18 мм рт. ст.</td><td>в пределах указанного диапазона</td></tr><tr><td>Центральная пахиметрия</td><td>565 мкм</td><td>увеличение на 28 мкм за 30 дней</td></tr><tr><td>ECD</td><td>1820 кл/мм²</td><td>снижение эндотелиального резерва</td></tr><tr><td>AS-OCT</td><td>умеренное утолщение трансплантата</td><td>требует сопоставления со щелевой лампой</td></tr></table></section><section><h2>Заключение</h2><p><b>Подозрение на иммунологическую реакцию трансплантата роговицы.</b> Совокупность жалоб, увеличения толщины трансплантата и снижения ECD требует срочного очного осмотра роговичным хирургом и исключения инфекционного кератита.</p></section><section><h2>План</h2><ol><li>Осмотр в тот же день: щелевая лампа, флюоресцеиновая проба, ВГД, фотофиксация.</li><li>При клиническом подтверждении — терапия только по назначению офтальмолога.</li><li>Контроль ответа через 24–48 часов с повторной пахиметрией.</li><li>Немедленное обращение при боли, покраснении, светобоязни или снижении зрения.</li></ol></section>${sources}`;}
+ if(id==='operation'){title='Протокол операции';body=`${common}<section><h2>Предоперационный диагноз</h2><p>Помутнение и функциональная декомпенсация роговицы OD. Показана сквозная кератопластика.</p></section><section><h2>Операция</h2><p><b>Сквозная кератопластика OD.</b> Демонстрационная запись, не воспроизводящая бланк конкретной клиники.</p><ol><li>Проверка пациента, стороны операции, донорского материала и информированного согласия.</li><li>Обработка операционного поля, стерильное укрытие, установка векорасширителя.</li><li>Центрация и трепанация роговицы реципиента; удаление патологически изменённой ткани.</li><li>Подготовка донорского трансплантата соответствующего диаметра.</li><li>Фиксация трансплантата 16 отдельными нейлоновыми швами 10-0 с контролем натяжения.</li><li>Восстановление передней камеры, проверка герметичности раны и положения трансплантата.</li><li>Субконъюнктивальное введение препаратов по решению хирурга, защитная повязка.</li></ol></section><section><h2>Интраоперационный результат</h2><p>Трансплантат центрирован, передняя камера сформирована, рана герметична. Интраоперационные осложнения в демонстрационной записи не отмечены.</p></section><section><h2>Послеоперационное наблюдение</h2><ul><li>Контроль на следующий день и далее по графику хирурга.</li><li>Защитный режим, исключение трения глаза и травмы.</li><li>Соблюдение назначенной местной терапии.</li><li>Срочное обращение при снижении зрения, боли, светобоязни или покраснении.</li></ul></section>${sources}`;}
+ if(id==='consent'){title='Информированное добровольное согласие';body=`${common}<section><h2>Предлагаемое вмешательство</h2><p>Сквозная кератопластика — замена центральной части патологически изменённой роговицы донорской тканью на всю толщину.</p></section><section><h2>Ожидаемая польза</h2><p>Улучшение прозрачности роговицы, восстановление её структуры и потенциальное улучшение зрения. Точный зрительный результат заранее не гарантируется и может зависеть от астигматизма, сетчатки, зрительного нерва и других заболеваний глаза.</p></section><section><h2>Альтернативы</h2><ul><li>Продолжение консервативного лечения и оптической коррекции, если это допустимо.</li><li>Другой вид кератопластики, когда он анатомически показан.</li><li>Отказ от операции с возможным сохранением или прогрессированием имеющихся нарушений.</li></ul></section><section><h2>Существенные риски</h2><ul><li>Отторжение или первичная/поздняя недостаточность трансплантата.</li><li>Инфекция, воспаление, замедленное заживление, расхождение раны.</li><li>Повышение ВГД/глаукома, катаракта, кровотечение, повреждение других структур глаза.</li><li>Высокий или нерегулярный астигматизм, необходимость очков, линз, коррекции швов или повторной операции.</li><li>Редко — выраженная потеря зрения.</li></ul></section><section><h2>Послеоперационные обязанности</h2><p>Регулярно использовать назначенные капли, посещать контрольные осмотры, защищать глаз от травмы. Боль, покраснение, светобоязнь, затуманивание или снижение зрения после трансплантации требуют срочной связи с офтальмологической службой.</p></section><section class="sign"><div>Пациент ____________________</div><div>Врач ____________________</div><div>Дата ____________________</div></section>${sources}`;}
+ return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:Arial,sans-serif;color:#16232b;margin:0;background:#eef2f3;line-height:1.55}.page{max-width:860px;margin:30px auto;background:#fff;padding:52px 58px;box-shadow:0 10px 38px #0002}header{border-bottom:2px solid #17343f;padding-bottom:18px;margin-bottom:24px}header b{letter-spacing:.16em;font-size:12px;color:#177d76}h1{font-size:30px;margin:8px 0}h2{font-size:18px;margin:28px 0 10px}p,li,td,th{font-size:14px}.notice{border:1px solid #d9aeb6;background:#fff5f6;padding:14px;margin:18px 0}.patient{display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:10px}.patient div{border:1px solid #dce5e7;padding:10px}.patient small,.patient b{display:block}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #dce5e7;padding:9px;text-align:left}.sources{font-size:11px;color:#65777f}.sign{display:grid;gap:22px;margin-top:40px}@media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:none}}</style></head><body><main class="page"><header><b>AURELIA CLINICAL INTELLIGENCE</b><h1>${title}</h1><span>${id==='operation'?'12.04.2025':'14.05.2026'} · учебная клиническая форма</span></header>${body}</main></body></html>`;
+}
+function downloadClinicalDocument(id:ClinicalDocumentId){const doc=clinicalDocuments.find(d=>d.id===id)!;const blob=new Blob([documentHtml(id)],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=doc.title.replaceAll(" ","-")+".html";a.click();URL.revokeObjectURL(url)}
+
+function DocumentPreview({id,onBack,notify}:{id:ClinicalDocumentId;onBack:()=>void;notify:(s:string)=>void}){const doc=clinicalDocuments.find(d=>d.id===id)!;return <div className="documentViewer"><div className="documentToolbar"><button className="iconText" onClick={onBack}><ChevronRight className="backIcon"/>К списку</button><div><b>{doc.title}</b><span>{doc.date} · учебная форма</span></div><button className="darkButton small" onClick={()=>{downloadClinicalDocument(id);notify("Документ скачан в формате HTML; его можно распечатать в PDF")}}><Download/>Скачать</button></div><iframe title={doc.title} srcDoc={documentHtml(id)}/></div>}
+function Patients({notify}:{notify:(s:string)=>void}){
+  const [active,setActive]=useState(0);const [visits,setVisits]=useState(false);const [visitIndex,setVisitIndex]=useState(0);const [action,setAction]=useState<string|null>(null);const [doc,setDoc]=useState<ClinicalDocumentId|null>(null);
+  const list=[patient,{...patient,id:"CR-0241",name:"Петрова Анна Сергеевна",risk:19,status:"Стабильно"},{...patient,id:"CR-0196",name:"Кузнецов Михаил Олегович",risk:41,status:"Наблюдение"}];const p=list[active];
+  return <><div className="split"><section className="panel"><div className="sectionTitle"><div><span className="eyebrow">РЕЕСТР</span><h2>Пациенты</h2></div><button className="darkButton small" onClick={()=>setAction("add")}><Plus/>Добавить</button></div>{list.map((item,i)=><button className={`patientRow ${i===active?"active":""}`} key={item.id} onClick={()=>setActive(i)}><span>{item.name.split(" ").slice(0,2).map(s=>s[0]).join("")}</span><div><b>{item.name}</b><small>{item.id} · {item.procedure}</small></div><em>{item.risk}%</em><ChevronRight/></button>)}</section><section className="panel detail"><div className="sectionTitle"><div><span className="eyebrow">КАРТА ПАЦИЕНТА</span><h2>{p.name}</h2></div><button className="iconText" onClick={()=>setAction("edit")}><SlidersHorizontal/>Редактировать</button></div><p>{p.procedure}, {p.eye}</p><div className="facts"><div><span>Дата операции</span><b>{p.operationDate}</b></div><div><span>Лечащий врач</span><b>{p.doctor}</b></div><div><span>Риск</span><b>{p.risk}%</b></div><div><span>Достоверность</span><b>{p.confidence}%</b></div></div><div className="clinicalNote"><Stethoscope/><div><b>Клинический статус</b><p>{p.status}. Последняя открытая точка: визит {visitIndex+1}.</p></div></div><div className="quickGrid"><button onClick={()=>setVisits(true)}><CalendarDays/><span>Визиты</span><ChevronRight/></button><button onClick={()=>setAction("studies")}><Microscope/><span>Исследования</span><ChevronRight/></button><button onClick={()=>{setDoc(null);setAction("docs")}}><FileText/><span>Документы</span><ChevronRight/></button></div></section></div>{visits&&<VisitDrawer patientName={p.name} close={()=>setVisits(false)} onSelect={setVisitIndex}/>} {action&&<Modal title={action==="add"?"Новый пациент":action==="edit"?"Редактирование карты":action==="studies"?"Исследования пациента":doc?clinicalDocuments.find(d=>d.id===doc)!.title:"Документы пациента"} close={()=>{setAction(null);setDoc(null)}}>{action==="add"||action==="edit"?<div className="formGrid"><label>ФИО<input defaultValue={action==="edit"?p.name:""} placeholder="Фамилия Имя Отчество"/></label><label>ID пациента<input defaultValue={action==="edit"?p.id:""} placeholder="CR-0000"/></label><label>Процедура<select defaultValue={p.procedure}><option>Сквозная кератопластика</option><option>DMEK</option><option>DSAEK</option></select></label><label>Глаз<select defaultValue={p.eye}><option>OD</option><option>OS</option></select></label><button className="darkButton" onClick={()=>{notify(action==="add"?"Пациент добавлен в демонстрационный реестр":"Изменения карты сохранены");setAction(null)}}><Save/>Сохранить</button></div>:action==="studies"?<div className="studyList">{[["AS-OCT","14.05.2026","565 µm"],["Спекулярная микроскопия","14.05.2026","ECD 1820"],["Пахиметрия","14.05.2026","Δ +28 µm"]].map(x=><button key={x[0]} onClick={()=>notify(`${x[0]} открыто`)}><Microscope/><div><b>{x[0]}</b><span>{x[1]}</span></div><strong>{x[2]}</strong><ChevronRight/></button>)}</div>:doc?<DocumentPreview id={doc} onBack={()=>setDoc(null)} notify={notify}/>:<div className="documentLibrary"><div className="documentDisclaimer"><ShieldCheck/><div><b>Проверяемые учебные формы</b><span>Содержание основано на материалах AAO, NHS, Moorfields и рецензируемых обзорах. Формы не имитируют бланк конкретной клиники.</span></div></div>{clinicalDocuments.map(d=><button key={d.id} onClick={()=>setDoc(d.id)}><FileText/><div><b>{d.title}</b><span>{d.summary}</span><small>{d.date} · {d.meta}</small></div><ChevronRight/></button>)}</div>}</Modal>}</>}
+
 function Observation({notify}:{notify:(s:string)=>void}){const [group,setGroup]=useState("Все");const [selected,setSelected]=useState<Marker|null>(null);const [visits,setVisits]=useState(false);const [visitIndex,setVisitIndex]=useState(0);const groups=["Все",...Array.from(new Set(markers.map(m=>m.group)))];const filtered=group==="Все"?markers:markers.filter(m=>m.group===group);return <><section className="panel"><div className="sectionTitle"><div><span className="eyebrow">МОЛЕКУЛЯРНЫЙ И КЛИНИЧЕСКИЙ ПРОФИЛЬ</span><h2>40 анализируемых признаков</h2><p className="sectionLead">Иммунология, ангиогенез, ремоделирование и морфометрия трансплантата. Активный визит: {visitIndex+1}.</p></div><button className="iconText" onClick={()=>setVisits(true)}><CalendarDays/>Архив визитов</button></div><div className="filterRow">{groups.map(g=><button key={g} className={group===g?"active":""} onClick={()=>setGroup(g)}>{g}</button>)}</div><div className="markerTable"><div className="markerHead"><span>Показатель</span><span>Значение</span><span>Референс</span><span>Динамика</span><span>Вклад</span></div>{filtered.map(m=><button className="markerRow" key={m.name} onClick={()=>setSelected(m)}><span><b>{m.name}</b><small>{m.group}</small></span><span>{m.value} {m.unit}</span><span>{m.ref}</span><span className={m.delta>0?"up":"down"}>{m.delta>0?"+":""}{m.delta}%</span><span><em><i style={{width:`${m.weight}%`}}/></em>{m.weight}%</span></button>)}</div></section>{visits&&<VisitDrawer patientName={patient.name} close={()=>setVisits(false)} onSelect={i=>{setVisitIndex(i);notify(`Открыт визит ${i+1}`)}}/>}{selected&&<Modal title={selected.name} close={()=>setSelected(null)}><div className="markerModal"><strong>{selected.value}</strong><span>{selected.unit}</span></div><p>{selected.group}. Референсный диапазон: {selected.ref}. Изменение относительно прошлого визита: {selected.delta>0?"+":""}{selected.delta}%.</p><div className="impact"><span>Вклад в прогноз</span><b>{selected.weight}%</b><em><i style={{width:`${selected.weight}%`}}/></em></div></Modal>}</>}
 
 function downloadCsv(){const csv="FPR,TPR\n0,0\n0.05,0.42\n0.12,0.68\n0.24,0.82\n0.41,0.91\n1,1";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="aurelia-roc.csv";a.click()}
