@@ -592,6 +592,11 @@ export default function Page() {
     if (!selected) return [] as { date: string; risk: number }[];
     return [...selected.visits].sort((a, b) => a.date.localeCompare(b.date)).map((v) => ({ date: v.date, risk: riskScoreFromVisit(selected, v) }));
   }, [selected]);
+  const orderedVisits = useMemo(
+    () => (selected ? [...selected.visits].sort((a, b) => a.date.localeCompare(b.date)) : []),
+    [selected]
+  );
+  const previousVisit = orderedVisits.length > 1 ? orderedVisits[orderedVisits.length - 2] : null;
   const futureForecast = useMemo(() => {
     if (!riskTimeline.length) return [] as { label: string; value: number }[];
     const now = riskTimeline[riskTimeline.length - 1].risk;
