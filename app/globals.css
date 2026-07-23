@@ -32,3 +32,47 @@
 
 /* v2.2 — simplified home, animated Digital Eye Twin and evidence-based treatment scenario */
 .compactHero{margin-bottom:16px}.compactHero h1{font-size:24px}.compactHero .heroRisk strong{font-size:34px}.worldTwin{border-radius:24px}.worldTwin .twinHeader{padding-bottom:14px}.worldTwin .twinHeader p{max-width:620px}.worldTwin .modeRail{grid-template-columns:repeat(4,1fr)}.worldTwin .modeRail button{justify-content:center}.worldTwin .visualStage{height:520px}.treatmentPlan{display:grid;gap:12px;margin-top:8px}.planAlert{display:grid;grid-template-columns:28px 1fr;gap:9px;padding:12px;border:1px solid #f1c9d1;background:#fff3f5;border-radius:14px;color:#8c2840}.planAlert svg{width:20px}.planAlert b,.planAlert span{display:block}.planAlert b{font-size:11px}.planAlert span{font-size:9px;line-height:1.45;margin-top:3px}.treatmentPlan ol{margin:0;padding-left:18px;display:grid;gap:8px;font-size:9px;line-height:1.5;color:#526b76}.treatmentPlan li b{color:#17343f}.evidenceNote{padding:11px;border-radius:12px;background:#f2f7f8;border:1px solid #dee9eb;font-size:8px;line-height:1.5;color:#6f838c}.evidenceNote b{color:#294653}.worldTwin .inspector{overflow:auto;max-height:520px}@media(max-width:900px){.worldTwin .modeRail{grid-template-columns:repeat(2,1fr)}.worldTwin .visualStage{height:430px}}
+
+
+/* v3.0 — stronger hierarchy, larger clinical plan, upgraded anatomical eye */
+.compactHero{padding:22px 26px;margin-bottom:12px;min-height:112px}
+.compactHero h1{font-size:30px;letter-spacing:-.035em;margin:5px 0}
+.compactHero .patientIdentity>div>span,.compactHero .patientIdentity p{font-size:12px}
+.compactHero .avatar{width:54px;height:54px;font-size:15px}
+.compactHero .heroRisk{min-width:190px;padding:0 24px}
+.compactHero .heroRisk span{font-size:12px}
+.compactHero .heroRisk strong{font-size:52px;line-height:.95;letter-spacing:-.055em}
+.compactHero .heroRisk small{font-size:11px;margin-top:7px}
+.homeVitals{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.homeVitals article{padding:17px 19px;border:1px solid #dce8ea;border-radius:18px;background:#fff;min-height:105px}
+.homeVitals span{display:block;font-size:11px;font-weight:700;color:#6c818b;text-transform:uppercase;letter-spacing:.06em}
+.homeVitals strong{display:block;font-size:34px;line-height:1;margin:11px 0 7px;color:#14313c;letter-spacing:-.035em}
+.homeVitals small{display:block;font-size:11px;color:#748993}
+.worldTwin .twinHeader h2{font-size:30px;letter-spacing:-.035em}
+.worldTwin .twinHeader p{font-size:13px;line-height:1.55}
+.worldTwin .modeRail button{min-height:56px;font-size:12px}
+.worldTwin .modeRail button svg{width:20px;height:20px}
+.worldTwin .twinBody{grid-template-columns:minmax(0,1fr) 360px}
+.worldTwin .visualStage{height:610px}
+.worldTwin .inspector{max-height:610px;padding:24px}
+.worldTwin .inspector h3{font-size:25px;line-height:1.15;margin:9px 0 12px}
+.worldTwin .inspectorValue strong{font-size:64px;line-height:.9}
+.worldTwin .inspectorValue span{font-size:19px}
+.worldTwin .inspector>p{font-size:13px;line-height:1.65}
+.treatmentPlan{gap:16px;margin-top:12px}
+.planAlert{grid-template-columns:32px 1fr;gap:12px;padding:16px;border-radius:16px}
+.planAlert svg{width:24px;height:24px}
+.planAlert b{font-size:15px;line-height:1.25}
+.planAlert span{font-size:12px;line-height:1.55;margin-top:5px}
+.planPhases{display:grid;gap:12px}
+.planPhases article{padding:16px;border:1px solid #dfe9eb;border-radius:16px;background:#fff}
+.planPhases article>span{display:block;font-size:10px;font-weight:800;letter-spacing:.11em;color:#148f86}
+.planPhases h4{font-size:17px;line-height:1.25;margin:7px 0 8px;color:#17343f}
+.planPhases p{font-size:13px;line-height:1.58;margin:0;color:#536d77}
+.planPhases strong{display:block;margin-top:10px;padding-top:10px;border-top:1px solid #e5edef;font-size:11px;line-height:1.5;color:#8b4050}
+.evidenceNote{padding:14px;font-size:11px;line-height:1.6;border-radius:14px}
+.decisionStack .decision span{font-size:11px}.decisionStack .decision b{font-size:14px}
+.modelTelemetry span{font-size:11px;padding:8px 12px}
+.stageBadge{font-size:11px;padding:9px 12px}
+@media(max-width:1100px){.worldTwin .twinBody{grid-template-columns:1fr}.worldTwin .inspector{max-height:none}.worldTwin .visualStage{height:560px}.homeVitals{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.compactHero{display:grid;grid-template-columns:1fr}.compactHero .heroRisk{padding:18px 0;border-left:0}.homeVitals{grid-template-columns:1fr 1fr}.homeVitals strong{font-size:28px}.worldTwin .visualStage{height:420px}.worldTwin .twinHeader h2{font-size:24px}.worldTwin .inspectorValue strong{font-size:52px}}
