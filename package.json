@@ -1,6 +1,6 @@
 {
-  "name": "aurelia-clinical-intelligence-ru-v10",
-  "version": "10.0.0",
+  "name": "aurelia-clinical-intelligence-2",
+  "version": "11.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
