@@ -114,140 +114,169 @@ function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number
 
 
 function drawEyeModel(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
-  const cx=w*.5, cy=h*.515, R=Math.min(w,h)*.36;
-  const targetX=((px||.5)-.5)*R*.13, targetY=((py||.5)-.5)*R*.075;
-  const microX=Math.sin(t*.73)*R*.006+Math.sin(t*1.91)*R*.002;
-  const microY=Math.cos(t*.61)*R*.004;
-  const ix=cx+targetX+microX, iy=cy+targetY+microY;
-  const cycle=(t*.10)%1;
-  const blink=cycle>.972?Math.sin((cycle-.972)/.028*Math.PI):0;
-  const aperture=R*(.58-blink*.56);
+  const cx=w*.5, cy=h*.515, R=Math.min(w,h)*.365;
+  const gazeX=((px||.5)-.5)*R*.055;
+  const gazeY=((py||.5)-.5)*R*.032;
+  const microX=(Math.sin(t*.71)+Math.sin(t*1.83)*.36)*R*.0018;
+  const microY=Math.cos(t*.63)*R*.0013;
+  const ix=cx+gazeX+microX, iy=cy+gazeY+microY;
+  const blinkCycle=(t*.075)%1;
+  const blink=blinkCycle>.982?Math.sin((blinkCycle-.982)/.018*Math.PI):0;
+  const aperture=R*(.56-blink*.54);
 
-  const bg=ctx.createRadialGradient(cx,cy,R*.05,cx,cy,R*2.15);
-  bg.addColorStop(0,'#172126'); bg.addColorStop(.48,'#0b1115'); bg.addColorStop(1,'#030506');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+  // Neutral examination-room background.
+  const bg=ctx.createRadialGradient(cx,cy-R*.05,R*.15,cx,cy,R*2.1);
+  bg.addColorStop(0,'#172026');bg.addColorStop(.45,'#0b1115');bg.addColorStop(1,'#030507');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
 
-  // Subtle studio rim behind the eye.
-  const halo=ctx.createRadialGradient(cx,cy,R*.65,cx,cy,R*1.65);
-  halo.addColorStop(0,'rgba(117,154,160,.10)');halo.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=halo;ctx.beginPath();ctx.ellipse(cx,cy,R*1.7,R*1.22,0,0,Math.PI*2);ctx.fill();
+  // Periocular tissue: restrained colour, broad subsurface shading, no decorative glow.
+  const tissue=ctx.createRadialGradient(cx-R*.32,cy-R*.32,R*.08,cx,cy,R*1.72);
+  tissue.addColorStop(0,'#c9a89b');tissue.addColorStop(.28,'#a67d72');tissue.addColorStop(.64,'#70504c');tissue.addColorStop(1,'#241a1d');
+  ctx.fillStyle=tissue;ctx.beginPath();ctx.ellipse(cx,cy,R*1.62,R*1.08,0,0,Math.PI*2);ctx.fill();
 
-  // Periorbital tissue with asymmetric photographic shading and fine grain.
-  const skin=ctx.createRadialGradient(cx-R*.25,cy-R*.28,R*.08,cx,cy,R*1.62);
-  skin.addColorStop(0,'#d7b9ad');skin.addColorStop(.32,'#b18a7e');skin.addColorStop(.66,'#74554f');skin.addColorStop(1,'#271d20');
-  ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(cx,cy,R*1.57,R*1.06,0,0,Math.PI*2);ctx.fill();
-  for(let i=0;i<1500;i++){
-    const a=(i*2.399963)% (Math.PI*2), rr=Math.sqrt(((i*67)%997)/997);
-    const x=cx+Math.cos(a)*rr*R*1.48, y=cy+Math.sin(a)*rr*R*.98;
-    const alpha=.006+((i*19)%13)/5000;
-    ctx.fillStyle=i%4===0?`rgba(255,235,224,${alpha})`:`rgba(55,32,34,${alpha})`;
-    ctx.fillRect(x,y,.7,.7);
+  // Deterministic skin microtexture.
+  for(let i=0;i<1050;i++){
+    const a=(i*2.3999632297)%(Math.PI*2), rr=Math.sqrt(((i*97)%1009)/1009);
+    const x=cx+Math.cos(a)*rr*R*1.52, y=cy+Math.sin(a)*rr*R*1.00;
+    const v=((i*31)%17)/17;
+    ctx.fillStyle=v>.63?'rgba(250,224,211,.010)':'rgba(49,29,31,.012)';
+    ctx.fillRect(x,y,.62,.62);
   }
 
-  // Eye opening clip.
+  // Palpebral fissure mask.
   ctx.save();
   ctx.beginPath();
-  ctx.moveTo(cx-R*1.39,cy);
-  ctx.bezierCurveTo(cx-R*.90,cy-aperture,cx+R*.91,cy-aperture*1.01,cx+R*1.39,cy);
-  ctx.bezierCurveTo(cx+R*.90,cy+aperture*.88,cx-R*.88,cy+aperture*.93,cx-R*1.39,cy);
+  ctx.moveTo(cx-R*1.40,cy+R*.01);
+  ctx.bezierCurveTo(cx-R*.86,cy-aperture*1.02,cx+R*.88,cy-aperture*.95,cx+R*1.40,cy-R*.005);
+  ctx.bezierCurveTo(cx+R*.92,cy+aperture*.80,cx-R*.92,cy+aperture*.88,cx-R*1.40,cy+R*.01);
   ctx.closePath();ctx.clip();
 
-  // Sclera: warm white, blue-grey depth and limbal darkening.
-  const scl=ctx.createRadialGradient(cx-R*.30,cy-R*.24,R*.06,cx,cy,R*1.45);
-  scl.addColorStop(0,'#fffdf7');scl.addColorStop(.35,'#f4f1e9');scl.addColorStop(.70,'#d8dcda');scl.addColorStop(1,'#77878c');
-  ctx.fillStyle=scl;ctx.fillRect(cx-R*1.5,cy-R, R*3,R*2);
-  const sclShadow=ctx.createLinearGradient(0,cy-aperture,0,cy+aperture);
-  sclShadow.addColorStop(0,'rgba(31,35,38,.28)');sclShadow.addColorStop(.22,'rgba(0,0,0,0)');sclShadow.addColorStop(.76,'rgba(0,0,0,0)');sclShadow.addColorStop(1,'rgba(45,35,38,.24)');
-  ctx.fillStyle=sclShadow;ctx.fillRect(0,cy-aperture-10,w,aperture*2+20);
+  // Sclera with nasal/temporal shading and subtle translucency.
+  const sclera=ctx.createRadialGradient(cx-R*.26,cy-R*.20,R*.08,cx,cy,R*1.50);
+  sclera.addColorStop(0,'#fbfaf5');sclera.addColorStop(.34,'#efeee8');sclera.addColorStop(.72,'#d4d8d6');sclera.addColorStop(1,'#7b898d');
+  ctx.fillStyle=sclera;ctx.fillRect(cx-R*1.52,cy-R, R*3.04,R*2);
+  const lidShadow=ctx.createLinearGradient(0,cy-aperture,0,cy+aperture);
+  lidShadow.addColorStop(0,'rgba(24,29,32,.32)');lidShadow.addColorStop(.20,'rgba(0,0,0,0)');lidShadow.addColorStop(.78,'rgba(0,0,0,0)');lidShadow.addColorStop(1,'rgba(39,31,33,.28)');
+  ctx.fillStyle=lidShadow;ctx.fillRect(0,cy-aperture-8,w,aperture*2+16);
 
-  // Organic conjunctival vessels with branching.
-  for(let i=0;i<22;i++){
-    const side=i%2?-1:1, baseY=cy-R*.48+(i%11)*R*.096;
-    const startX=cx+side*R*.68, endX=cx+side*R*1.35;
-    ctx.strokeStyle=`rgba(126,48,55,${.045+(i%4)*.015})`;ctx.lineWidth=.45+(i%3)*.18;
-    ctx.beginPath();ctx.moveTo(startX,baseY);
-    ctx.bezierCurveTo(cx+side*R*.88,baseY+Math.sin(i*.9)*R*.05,cx+side*R*1.12,baseY-Math.cos(i*.61)*R*.05,endX,baseY+Math.sin(i*.37)*R*.035);ctx.stroke();
-    if(i%3===0){
-      const bx=cx+side*R*1.01, by=baseY+Math.sin(i*.9)*R*.02;
-      ctx.globalAlpha=.8;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+side*R*.10,by-R*.045,bx+side*R*.18,by-R*.085);ctx.stroke();ctx.globalAlpha=1;
+  // Branching conjunctival vessels, sparse and peripheral.
+  for(let i=0;i<28;i++){
+    const side=i%2?-1:1;
+    const lane=(i%14)/13;
+    const y0=cy-R*.48+lane*R*.96;
+    const x0=cx+side*R*.72;
+    const x1=cx+side*R*(1.34+((i*7)%5)*.015);
+    ctx.strokeStyle=`rgba(133,55,61,${.035+(i%5)*.010})`;ctx.lineWidth=.36+(i%3)*.12;
+    ctx.beginPath();ctx.moveTo(x0,y0);
+    ctx.bezierCurveTo(cx+side*R*.91,y0+Math.sin(i*.82)*R*.035,cx+side*R*1.13,y0-Math.cos(i*.51)*R*.046,x1,y0+Math.sin(i*.33)*R*.026);ctx.stroke();
+    if(i%4===0){
+      const bx=cx+side*R*1.01,by=y0+Math.sin(i*.82)*R*.018;
+      ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+side*R*.09,by-R*.03,bx+side*R*.17,by-R*.06);ctx.stroke();
     }
   }
 
-  const irisR=R*.515;
-  // Limbal ring with optical depth.
-  const limbal=ctx.createRadialGradient(ix,iy,irisR*.84,ix,iy,irisR*1.16);
-  limbal.addColorStop(0,'rgba(14,23,24,0)');limbal.addColorStop(.66,'rgba(22,37,39,.25)');limbal.addColorStop(1,'rgba(7,13,15,.88)');
-  ctx.fillStyle=limbal;ctx.beginPath();ctx.arc(ix,iy,irisR*1.14,0,Math.PI*2);ctx.fill();
+  const irisR=R*.505;
+  // Limbus: dark annulus and blue-grey transition rather than a hard outline.
+  const limbus=ctx.createRadialGradient(ix,iy,irisR*.86,ix,iy,irisR*1.18);
+  limbus.addColorStop(0,'rgba(8,15,16,0)');limbus.addColorStop(.52,'rgba(31,48,48,.16)');limbus.addColorStop(.80,'rgba(20,34,36,.52)');limbus.addColorStop(1,'rgba(8,14,16,.92)');
+  ctx.fillStyle=limbus;ctx.beginPath();ctx.arc(ix,iy,irisR*1.18,0,Math.PI*2);ctx.fill();
 
-  // Iris base with non-uniform pigmentation.
-  const iris=ctx.createRadialGradient(ix-R*.07,iy-R*.09,R*.03,ix,iy,irisR);
-  iris.addColorStop(0,'#19251e');iris.addColorStop(.18,'#4d4a31');iris.addColorStop(.43,'#777052');iris.addColorStop(.72,'#435447');iris.addColorStop(1,'#142426');
+  // Iris base with radial depth and mild sectoral heterochromia.
+  const iris=ctx.createRadialGradient(ix-R*.08,iy-R*.10,R*.02,ix,iy,irisR);
+  iris.addColorStop(0,'#2f2f22');iris.addColorStop(.18,'#665f3e');iris.addColorStop(.42,'#777151');iris.addColorStop(.72,'#3b4a3f');iris.addColorStop(1,'#152526');
   ctx.fillStyle=iris;ctx.beginPath();ctx.arc(ix,iy,irisR,0,Math.PI*2);ctx.fill();
 
-  // Dense iris stroma: thousands of irregular fibres and furrows.
-  for(let i=0;i<880;i++){
-    const a=i/880*Math.PI*2 + .015*Math.sin(i*.37);
-    const inner=R*(.145+.02*Math.sin(i*.91));
-    const outer=R*(.485+.018*Math.sin(i*.31));
-    const mid=R*(.28+.035*Math.sin(i*.17));
-    const warm=i%13===0, dark=i%5===0;
-    ctx.strokeStyle=warm?'rgba(210,178,112,.21)':dark?'rgba(18,28,24,.27)':'rgba(151,158,113,.12)';
-    ctx.lineWidth=warm?.72:.32;
+  // Stromal fibres with irregular spacing, thickness and pigmentation.
+  for(let i=0;i<1180;i++){
+    const a=i/1180*Math.PI*2 + Math.sin(i*.73)*.007;
+    const inner=R*(.150+.020*Math.sin(i*.91));
+    const outer=R*(.482+.018*Math.sin(i*.29));
+    const bend=.015*Math.sin(i*.17)+.010*Math.sin(i*.47);
+    const mid=R*(.29+.040*Math.sin(i*.13));
+    const warm=i%17===0, dark=i%4===0;
+    ctx.strokeStyle=warm?'rgba(214,183,115,.19)':dark?'rgba(12,22,19,.23)':'rgba(156,160,112,.095)';
+    ctx.lineWidth=warm?.60:.26+(i%3)*.035;
     ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*inner,iy+Math.sin(a)*inner);
-    ctx.quadraticCurveTo(ix+Math.cos(a+.02*Math.sin(i))*mid,iy+Math.sin(a+.02*Math.sin(i))*mid,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
+    ctx.quadraticCurveTo(ix+Math.cos(a+bend)*mid,iy+Math.sin(a+bend)*mid,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
   }
-  // Contraction furrows.
-  for(let j=0;j<5;j++){
-    ctx.strokeStyle=`rgba(8,18,17,${.16-j*.018})`;ctx.lineWidth=.7;
+
+  // Contraction furrows and crypts.
+  for(let j=0;j<6;j++){
+    ctx.strokeStyle=`rgba(7,15,14,${.145-j*.014})`;ctx.lineWidth=.55;
     ctx.beginPath();
-    for(let i=0;i<=160;i++){const a=i/160*Math.PI*2;const rr=R*(.34+j*.027+.008*Math.sin(a*8+j));const x=ix+Math.cos(a)*rr,y=iy+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.stroke();
+    for(let k=0;k<=220;k++){
+      const a=k/220*Math.PI*2;
+      const rr=R*(.326+j*.026+.007*Math.sin(a*(7+j)+j*.9));
+      const x=ix+Math.cos(a)*rr,y=iy+Math.sin(a)*rr;
+      k?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.closePath();ctx.stroke();
   }
-  // Crypts and collarette.
-  ctx.strokeStyle='rgba(222,196,133,.22)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(ix,iy,R*.255,0,Math.PI*2);ctx.stroke();
-  for(let i=0;i<34;i++){const a=i/34*Math.PI*2+.16,rr=R*(.26+(i%5)*.037);ctx.fillStyle=`rgba(9,17,14,${.20+(i%4)*.035})`;ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*(.018+(i%3)*.005),R*.007,a,0,Math.PI*2);ctx.fill()}
+  ctx.strokeStyle='rgba(222,198,139,.16)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(ix,iy,R*.252,0,Math.PI*2);ctx.stroke();
+  for(let i=0;i<42;i++){
+    const a=i/42*Math.PI*2+.11, rr=R*(.255+(i%6)*.031);
+    ctx.fillStyle=`rgba(7,14,12,${.17+(i%5)*.022})`;
+    ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*(.014+(i%4)*.003),R*.0055,a,0,Math.PI*2);ctx.fill();
+  }
 
-  const pr=R*(.143+.004*Math.sin(t*.28));
-  ctx.strokeStyle='rgba(44,38,26,.82)';ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(ix,iy,pr*1.085,0,Math.PI*2);ctx.stroke();
-  const pupil=ctx.createRadialGradient(ix-R*.025,iy-R*.02,0,ix,iy,pr);
-  pupil.addColorStop(0,'#000');pupil.addColorStop(.82,'#010202');pupil.addColorStop(1,'#0b0f0d');ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
+  // Pupil and pupillary ruff.
+  const pr=R*(.142+.0022*Math.sin(t*.18));
+  ctx.strokeStyle='rgba(32,29,21,.88)';ctx.lineWidth=2.1;ctx.beginPath();ctx.arc(ix,iy,pr*1.09,0,Math.PI*2);ctx.stroke();
+  const pupil=ctx.createRadialGradient(ix-R*.022,iy-R*.018,0,ix,iy,pr);
+  pupil.addColorStop(0,'#000');pupil.addColorStop(.86,'#010202');pupil.addColorStop(1,'#0b0e0d');
+  ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
 
-  // Corneal dome: refraction, tear film and multiple realistic reflections.
-  const cor=ctx.createRadialGradient(ix-R*.19,iy-R*.26,R*.02,ix,iy,R*.72);
-  cor.addColorStop(0,'rgba(255,255,255,.34)');cor.addColorStop(.10,'rgba(255,255,255,.08)');cor.addColorStop(.58,'rgba(173,207,208,.018)');cor.addColorStop(1,'rgba(92,133,140,.16)');
-  ctx.fillStyle=cor;ctx.beginPath();ctx.arc(ix,iy,R*.705,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(213,234,233,.20)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(ix,iy,R*.705,0,Math.PI*2);ctx.stroke();
+  // Corneal optics: transparent dome, edge thickness, tear film and subdued Purkinje reflections.
+  const cornea=ctx.createRadialGradient(ix-R*.20,iy-R*.28,R*.015,ix,iy,R*.73);
+  cornea.addColorStop(0,'rgba(255,255,255,.19)');cornea.addColorStop(.10,'rgba(255,255,255,.045)');cornea.addColorStop(.62,'rgba(170,206,209,.012)');cornea.addColorStop(1,'rgba(89,132,139,.135)');
+  ctx.fillStyle=cornea;ctx.beginPath();ctx.arc(ix,iy,R*.710,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(202,229,230,.15)';ctx.lineWidth=.9;ctx.beginPath();ctx.arc(ix,iy,R*.710,0,Math.PI*2);ctx.stroke();
 
-  // Graft boundary and interrupted sutures.
-  ctx.strokeStyle='rgba(218,226,218,.28)';ctx.lineWidth=.9;ctx.setLineDash([2.5,4]);ctx.beginPath();ctx.arc(ix,iy,R*.575,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-  for(let i=0;i<16;i++){const a=i/16*Math.PI*2+.055;ctx.strokeStyle='rgba(213,220,214,.23)';ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*R*.55,iy+Math.sin(a)*R*.55);ctx.lineTo(ix+Math.cos(a)*R*.63,iy+Math.sin(a)*R*.63);ctx.stroke()}
+  // Penetrating keratoplasty graft-host junction and individual interrupted sutures.
+  ctx.strokeStyle='rgba(215,224,217,.24)';ctx.lineWidth=.75;ctx.beginPath();ctx.arc(ix,iy,R*.574,0,Math.PI*2);ctx.stroke();
+  for(let i=0;i<16;i++){
+    const a=i/16*Math.PI*2+.050;
+    const r1=R*.548,r2=R*.632;
+    ctx.strokeStyle='rgba(219,224,218,.26)';ctx.lineWidth=.58;
+    ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*r1,iy+Math.sin(a)*r1);ctx.lineTo(ix+Math.cos(a)*r2,iy+Math.sin(a)*r2);ctx.stroke();
+    ctx.fillStyle='rgba(224,228,222,.24)';ctx.beginPath();ctx.arc(ix+Math.cos(a)*r2,iy+Math.sin(a)*r2,R*.006,0,Math.PI*2);ctx.fill();
+  }
 
-  // Restrained inflammatory region.
-  const hx=ix+R*.285,hy=iy-R*.205;
-  const edema=ctx.createRadialGradient(hx,hy,0,hx,hy,R*.18);
-  edema.addColorStop(0,'rgba(168,70,75,.17)');edema.addColorStop(.55,'rgba(155,61,67,.055)');edema.addColorStop(1,'rgba(150,60,65,0)');
-  ctx.fillStyle=edema;ctx.beginPath();ctx.arc(hx,hy,R*.20,0,Math.PI*2);ctx.fill();
+  // Clinically restrained stromal oedema: diffuse haze and faint Descemet-like folds.
+  const hx=ix+R*.23,hy=iy-R*.17;
+  const haze=ctx.createRadialGradient(hx,hy,0,hx,hy,R*.23);
+  haze.addColorStop(0,'rgba(202,215,211,.13)');haze.addColorStop(.58,'rgba(166,192,193,.050)');haze.addColorStop(1,'rgba(145,176,180,0)');
+  ctx.fillStyle=haze;ctx.beginPath();ctx.arc(hx,hy,R*.24,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<5;i++){
+    const yy=hy-R*.055+i*R*.025;
+    ctx.strokeStyle='rgba(224,236,235,.08)';ctx.lineWidth=.7;
+    ctx.beginPath();ctx.moveTo(hx-R*.12,yy);ctx.bezierCurveTo(hx-R*.04,yy-R*.018,hx+R*.05,yy+R*.018,hx+R*.13,yy);ctx.stroke();
+  }
 
-  // Studio softbox reflections and tear meniscus.
-  ctx.fillStyle='rgba(255,255,255,.78)';ctx.beginPath();ctx.ellipse(ix-R*.245,iy-R*.30,R*.105,R*.027,-.55,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.36)';ctx.beginPath();ctx.ellipse(ix-R*.10,iy-R*.39,R*.035,R*.018,-.4,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.16)';ctx.beginPath();ctx.ellipse(ix+R*.22,iy+R*.18,R*.050,R*.014,-.5,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(246,255,255,.26)';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(ix,iy,R*.67,.13*Math.PI,.87*Math.PI);ctx.stroke();
+  // Reflections are small and clinically neutral.
+  ctx.fillStyle='rgba(255,255,255,.58)';ctx.beginPath();ctx.ellipse(ix-R*.255,iy-R*.305,R*.080,R*.020,-.52,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.24)';ctx.beginPath();ctx.ellipse(ix-R*.108,iy-R*.395,R*.025,R*.012,-.35,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(244,252,252,.18)';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(ix,iy,R*.675,.14*Math.PI,.86*Math.PI);ctx.stroke();
   ctx.restore();
 
-  // Anatomically shaped lids, lid margins and lashes.
-  const close=blink*R*.58, upper=cy-R*.04+close, lower=cy+R*.035-close*.88;
-  const upperSkin=ctx.createLinearGradient(0,cy-R,0,cy);upperSkin.addColorStop(0,'#4e3839');upperSkin.addColorStop(.62,'#9d776f');upperSkin.addColorStop(1,'#6e4d4a');
-  ctx.fillStyle=upperSkin;ctx.beginPath();ctx.moveTo(cx-R*1.48,upper);ctx.bezierCurveTo(cx-R*.88,cy-R*.70+close,cx+R*.90,cy-R*.71+close,cx+R*1.48,upper);ctx.lineTo(cx+R*1.58,cy-R*1.16);ctx.lineTo(cx-R*1.58,cy-R*1.16);ctx.closePath();ctx.fill();
-  const lowerSkin=ctx.createLinearGradient(0,cy,0,cy+R);lowerSkin.addColorStop(0,'#9f786e');lowerSkin.addColorStop(.65,'#684b49');lowerSkin.addColorStop(1,'#2b2225');
-  ctx.fillStyle=lowerSkin;ctx.beginPath();ctx.moveTo(cx-R*1.48,lower);ctx.bezierCurveTo(cx-R*.88,cy+R*.62-close*.88,cx+R*.90,cy+R*.62-close*.88,cx+R*1.48,lower);ctx.lineTo(cx+R*1.58,cy+R*1.17);ctx.lineTo(cx-R*1.58,cy+R*1.17);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(48,29,32,.82)';ctx.lineWidth=2.1;ctx.beginPath();ctx.moveTo(cx-R*1.39,upper);ctx.bezierCurveTo(cx-R*.82,cy-R*.63+close,cx+R*.84,cy-R*.65+close,cx+R*1.39,upper);ctx.stroke();
-  ctx.strokeStyle='rgba(76,44,45,.62)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(cx-R*1.38,lower);ctx.bezierCurveTo(cx-R*.84,cy+R*.57-close*.88,cx+R*.86,cy+R*.58-close*.88,cx+R*1.38,lower);ctx.stroke();
-  if(blink<.48){for(let i=0;i<30;i++){const q=i/29,x=cx-R*1.14+q*R*2.28,y=cy-R*(.50-.15*Math.pow((q-.5)*2,2));ctx.strokeStyle=`rgba(25,18,20,${.35+(i%4)*.08})`;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+(q-.5)*R*.022,y-R*.038,x+(q-.5)*R*.045,y-R*(.07+(i%3)*.012));ctx.stroke()}}
-
-  // Clinical annotations are intentionally quiet and outside the anatomy.
-  label(ctx,'DIGITAL EYE TWIN 5.0 · CLINICAL RENDER',24,28);
-  label(ctx,'Синтетическая модель переднего сегмента · PKP · OD',24,h-22);
-  label(ctx,'РИСК 72%',w-24,28,'right');
+  // Eyelids, margins and restrained lashes.
+  const close=blink*R*.57;
+  const upper=cy-R*.035+close, lower=cy+R*.040-close*.86;
+  const upperSkin=ctx.createLinearGradient(0,cy-R,0,cy);
+  upperSkin.addColorStop(0,'#483335');upperSkin.addColorStop(.60,'#927067');upperSkin.addColorStop(1,'#654745');
+  ctx.fillStyle=upperSkin;ctx.beginPath();ctx.moveTo(cx-R*1.50,upper);ctx.bezierCurveTo(cx-R*.86,cy-R*.67+close,cx+R*.89,cy-R*.65+close,cx+R*1.50,upper);ctx.lineTo(cx+R*1.61,cy-R*1.18);ctx.lineTo(cx-R*1.61,cy-R*1.18);ctx.closePath();ctx.fill();
+  const lowerSkin=ctx.createLinearGradient(0,cy,0,cy+R);
+  lowerSkin.addColorStop(0,'#987168');lowerSkin.addColorStop(.66,'#604543');lowerSkin.addColorStop(1,'#271f22');
+  ctx.fillStyle=lowerSkin;ctx.beginPath();ctx.moveTo(cx-R*1.50,lower);ctx.bezierCurveTo(cx-R*.87,cy+R*.59-close*.86,cx+R*.90,cy+R*.58-close*.86,cx+R*1.50,lower);ctx.lineTo(cx+R*1.61,cy+R*1.19);ctx.lineTo(cx-R*1.61,cy+R*1.19);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(45,27,30,.88)';ctx.lineWidth=1.9;ctx.beginPath();ctx.moveTo(cx-R*1.40,upper);ctx.bezierCurveTo(cx-R*.82,cy-R*.61+close,cx+R*.85,cy-R*.61+close,cx+R*1.40,upper);ctx.stroke();
+  ctx.strokeStyle='rgba(74,42,44,.64)';ctx.lineWidth=1.35;ctx.beginPath();ctx.moveTo(cx-R*1.39,lower);ctx.bezierCurveTo(cx-R*.84,cy+R*.54-close*.86,cx+R*.86,cy+R*.55-close*.86,cx+R*1.39,lower);ctx.stroke();
+  if(blink<.46){
+    for(let i=0;i<24;i++){
+      const q=i/23,x=cx-R*1.10+q*R*2.20,y=cy-R*(.475-.13*Math.pow((q-.5)*2,2));
+      ctx.strokeStyle=`rgba(24,17,19,${.32+(i%4)*.055})`;ctx.lineWidth=.48;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+(q-.5)*R*.018,y-R*.030,x+(q-.5)*R*.036,y-R*(.056+(i%3)*.009));ctx.stroke();
+    }
+  }
 }
 
 function drawBiofield(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
