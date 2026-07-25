@@ -13,9 +13,12 @@ type View = "home" | "patients" | "observation" | "research" | "reports" | "help
 type TwinMode = "fusion" | "anatomy" | "explorer" | "heat" | "network" | "timeline" | "forecast" | "simulation";
 type Marker = { name: string; group: string; value: number; unit: string; ref: string; delta: number; weight: number; status: "high" | "low" | "normal" };
 
+type Study = { id:string; type:string; date:string; result:string; status:"normal"|"attention"|"critical"; notes:string };
+type ClinicalEntry = { date:string; visualAcuity:string; iop:number; pachymetry:number; endothelialDensity:number; diagnosis:string; treatment:string; notes:string };
 type Patient = {
-  id: string; name: string; age: number; eye: "OD" | "OS"; procedure: string; operationDate: string;
-  doctor: string; risk: number; confidence: number; status: string; history: number[];
+  id: string; name: string; age: number; birthDate?:string; sex?:"М"|"Ж"; eye: "OD" | "OS"; procedure: string; operationDate: string;
+  doctor: string; risk: number; confidence: number; status: string; history: number[]; diagnosis?:string; phone?:string;
+  studies?:Study[]; clinicalData?:ClinicalEntry[];
 };
 
 const patient: Patient = {
@@ -24,6 +27,19 @@ const patient: Patient = {
   doctor: "Смирнова Е.А.", risk: 72, confidence: 93, status: "Требует внимания",
   history: [24, 29, 36, 44, 53, 63, 72]
 };
+
+const initialPatients: Patient[] = [
+  {...patient,birthDate:"18.09.1969",sex:"М",diagnosis:"Подозрение на иммунное отторжение трансплантата",phone:"+7 900 000-03-18",studies:[{id:"ST-318-1",type:"AS-OCT",date:"14.05.2026",result:"CCT 565 мкм",status:"attention",notes:"Умеренное увеличение толщины трансплантата"},{id:"ST-318-2",type:"Спекулярная микроскопия",date:"14.05.2026",result:"ECD 1820 кл/мм²",status:"critical",notes:"Снижение эндотелиального резерва"}],clinicalData:[{date:"14.05.2026",visualAcuity:"0,45",iop:18,pachymetry:565,endothelialDensity:1820,diagnosis:"Подозрение на реакцию отторжения",treatment:"Срочный осмотр роговичного хирурга",notes:"Покраснение и светобоязнь"}]},
+  {id:"CR-0321",name:"Петров Пётр Сергеевич",age:48,birthDate:"04.02.1978",sex:"М",eye:"OS",procedure:"DALK",operationDate:"08.11.2025",doctor:"Смирнова Е.А.",risk:18,confidence:91,status:"Стабилен",history:[22,20,19,18],diagnosis:"Кератоконус IV стадии",studies:[],clinicalData:[]},
+  {id:"CR-0327",name:"Сидорова Анна Викторовна",age:62,birthDate:"21.07.1963",sex:"Ж",eye:"OD",procedure:"DSAEK",operationDate:"17.01.2026",doctor:"Ковалёв М.И.",risk:36,confidence:89,status:"Плановый контроль",history:[44,40,38,36],diagnosis:"Буллёзная кератопатия",studies:[],clinicalData:[]},
+  {id:"CR-0334",name:"Смирнова Наталья Олеговна",age:57,birthDate:"12.12.1968",sex:"Ж",eye:"OS",procedure:"DMEK",operationDate:"03.03.2026",doctor:"Ковалёв М.И.",risk:12,confidence:94,status:"Хорошая динамика",history:[28,20,15,12],diagnosis:"Дистрофия Фукса",studies:[],clinicalData:[]},
+  {id:"CR-0341",name:"Кузнецов Евгений Андреевич",age:65,birthDate:"30.05.1961",sex:"М",eye:"OD",procedure:"Сквозная кератопластика",operationDate:"25.06.2024",doctor:"Смирнова Е.А.",risk:81,confidence:92,status:"Высокий риск",history:[39,48,59,70,81],diagnosis:"Декомпенсация трансплантата",studies:[],clinicalData:[]},
+  {id:"CR-0348",name:"Орлова Елена Валерьевна",age:52,birthDate:"16.03.1974",sex:"Ж",eye:"OS",procedure:"Повторная PKP",operationDate:"21.09.2025",doctor:"Иванов Д.К.",risk:54,confidence:86,status:"Требует контроля",history:[62,59,55,54],diagnosis:"Вторичная недостаточность трансплантата",studies:[],clinicalData:[]},
+  {id:"CR-0355",name:"Васильев Игорь Геннадьевич",age:31,birthDate:"09.10.1994",sex:"М",eye:"OD",procedure:"DALK",operationDate:"11.02.2026",doctor:"Иванов Д.К.",risk:9,confidence:95,status:"Стабилен",history:[16,12,10,9],diagnosis:"Кератоконус III стадии",studies:[],clinicalData:[]},
+  {id:"CR-0362",name:"Новикова Мария Павловна",age:71,birthDate:"02.01.1955",sex:"Ж",eye:"OS",procedure:"DSAEK",operationDate:"30.10.2025",doctor:"Ковалёв М.И.",risk:43,confidence:88,status:"Наблюдение",history:[52,47,45,43],diagnosis:"Псевдофакичная буллёзная кератопатия",studies:[],clinicalData:[]},
+  {id:"CR-0369",name:"Фёдоров Алексей Михайлович",age:44,birthDate:"19.08.1981",sex:"М",eye:"OD",procedure:"Сквозная кератопластика",operationDate:"14.04.2025",doctor:"Смирнова Е.А.",risk:68,confidence:84,status:"Высокий риск",history:[33,41,52,61,68],diagnosis:"Постгерпетическое помутнение роговицы",studies:[],clinicalData:[]},
+  {id:"CR-0376",name:"Морозова Дарья Сергеевна",age:39,birthDate:"27.11.1986",sex:"Ж",eye:"OS",procedure:"Сквозная кератопластика",operationDate:"05.12.2025",doctor:"Иванов Д.К.",risk:27,confidence:90,status:"Плановый контроль",history:[38,34,30,27],diagnosis:"Посттравматический рубец роговицы",studies:[],clinicalData:[]}
+];
 
 const markers: Marker[] = [
   {name:"IL-1β",group:"Провоспалительные",value:8.7,unit:"пг/мл",ref:"0–5",delta:19,weight:63,status:"high"},
@@ -114,169 +130,124 @@ function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number
 
 
 function drawEyeModel(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
-  const cx=w*.5, cy=h*.515, R=Math.min(w,h)*.365;
-  const gazeX=((px||.5)-.5)*R*.055;
-  const gazeY=((py||.5)-.5)*R*.032;
-  const microX=(Math.sin(t*.71)+Math.sin(t*1.83)*.36)*R*.0018;
-  const microY=Math.cos(t*.63)*R*.0013;
-  const ix=cx+gazeX+microX, iy=cy+gazeY+microY;
-  const blinkCycle=(t*.075)%1;
-  const blink=blinkCycle>.982?Math.sin((blinkCycle-.982)/.018*Math.PI):0;
-  const aperture=R*(.56-blink*.54);
+  const cx=w*.50, cy=h*.52;
+  const R=Math.min(w*.38,h*.43);
+  const gazeX=((px||.5)-.5)*R*.05 + Math.sin(t*.43)*R*.0025;
+  const gazeY=((py||.5)-.5)*R*.035 + Math.cos(t*.37)*R*.0018;
+  const ix=cx+gazeX, iy=cy+gazeY;
 
-  // Neutral examination-room background.
-  const bg=ctx.createRadialGradient(cx,cy-R*.05,R*.15,cx,cy,R*2.1);
-  bg.addColorStop(0,'#172026');bg.addColorStop(.45,'#0b1115');bg.addColorStop(1,'#030507');
-  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  const background=ctx.createRadialGradient(cx-R*.22,cy-R*.28,R*.06,cx,cy,R*2.2);
+  background.addColorStop(0,"#32373a"); background.addColorStop(.38,"#22272a"); background.addColorStop(1,"#0b0d0e");
+  ctx.fillStyle=background;ctx.fillRect(0,0,w,h);
 
-  // Periocular tissue: restrained colour, broad subsurface shading, no decorative glow.
-  const tissue=ctx.createRadialGradient(cx-R*.32,cy-R*.32,R*.08,cx,cy,R*1.72);
-  tissue.addColorStop(0,'#c9a89b');tissue.addColorStop(.28,'#a67d72');tissue.addColorStop(.64,'#70504c');tissue.addColorStop(1,'#241a1d');
-  ctx.fillStyle=tissue;ctx.beginPath();ctx.ellipse(cx,cy,R*1.62,R*1.08,0,0,Math.PI*2);ctx.fill();
+  // Ground shadow gives the globe physical weight without a decorative halo.
+  const shadow=ctx.createRadialGradient(cx,cy+R*.84,R*.12,cx,cy+R*.84,R*1.15);
+  shadow.addColorStop(0,"rgba(0,0,0,.58)");shadow.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=shadow;ctx.beginPath();ctx.ellipse(cx,cy+R*.84,R*1.12,R*.24,0,0,Math.PI*2);ctx.fill();
 
-  // Deterministic skin microtexture.
-  for(let i=0;i<1050;i++){
-    const a=(i*2.3999632297)%(Math.PI*2), rr=Math.sqrt(((i*97)%1009)/1009);
-    const x=cx+Math.cos(a)*rr*R*1.52, y=cy+Math.sin(a)*rr*R*1.00;
-    const v=((i*31)%17)/17;
-    ctx.fillStyle=v>.63?'rgba(250,224,211,.010)':'rgba(49,29,31,.012)';
-    ctx.fillRect(x,y,.62,.62);
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.clip();
+
+  // Scleral globe: warm collagen, cool inferior reflection and peripheral translucency.
+  const sclera=ctx.createRadialGradient(cx-R*.32,cy-R*.38,R*.03,cx+R*.05,cy+R*.03,R*1.12);
+  sclera.addColorStop(0,"#fffdf5");sclera.addColorStop(.32,"#f4f1e8");sclera.addColorStop(.67,"#d8d8cf");sclera.addColorStop(.9,"#9c9290");sclera.addColorStop(1,"#4e4648");
+  ctx.fillStyle=sclera;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+
+  // Fine deterministic collagen texture.
+  for(let i=0;i<2700;i++){
+    const a=(i*2.3999632297)%(Math.PI*2), rr=Math.sqrt(((i*97)%2687)/2687)*R;
+    const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
+    const edge=rr/R, alpha=.008+edge*.018;
+    ctx.fillStyle=i%5===0?`rgba(255,255,248,${alpha})`:`rgba(92,61,63,${alpha*.55})`;
+    ctx.fillRect(x,y,.55+(i%3)*.22,.55+(i%2)*.22);
   }
 
-  // Palpebral fissure mask.
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(cx-R*1.40,cy+R*.01);
-  ctx.bezierCurveTo(cx-R*.86,cy-aperture*1.02,cx+R*.88,cy-aperture*.95,cx+R*1.40,cy-R*.005);
-  ctx.bezierCurveTo(cx+R*.92,cy+aperture*.80,cx-R*.92,cy+aperture*.88,cx-R*1.40,cy+R*.01);
-  ctx.closePath();ctx.clip();
-
-  // Sclera with nasal/temporal shading and subtle translucency.
-  const sclera=ctx.createRadialGradient(cx-R*.26,cy-R*.20,R*.08,cx,cy,R*1.50);
-  sclera.addColorStop(0,'#fbfaf5');sclera.addColorStop(.34,'#efeee8');sclera.addColorStop(.72,'#d4d8d6');sclera.addColorStop(1,'#7b898d');
-  ctx.fillStyle=sclera;ctx.fillRect(cx-R*1.52,cy-R, R*3.04,R*2);
-  const lidShadow=ctx.createLinearGradient(0,cy-aperture,0,cy+aperture);
-  lidShadow.addColorStop(0,'rgba(24,29,32,.32)');lidShadow.addColorStop(.20,'rgba(0,0,0,0)');lidShadow.addColorStop(.78,'rgba(0,0,0,0)');lidShadow.addColorStop(1,'rgba(39,31,33,.28)');
-  ctx.fillStyle=lidShadow;ctx.fillRect(0,cy-aperture-8,w,aperture*2+16);
-
-  // Branching conjunctival vessels, sparse and peripheral.
-  for(let i=0;i<28;i++){
-    const side=i%2?-1:1;
-    const lane=(i%14)/13;
-    const y0=cy-R*.48+lane*R*.96;
-    const x0=cx+side*R*.72;
-    const x1=cx+side*R*(1.34+((i*7)%5)*.015);
-    ctx.strokeStyle=`rgba(133,55,61,${.035+(i%5)*.010})`;ctx.lineWidth=.36+(i%3)*.12;
+  // Episcleral and conjunctival vascular network, denser at superior and temporal periphery.
+  for(let i=0;i<58;i++){
+    const a=-Math.PI*.96+i/57*Math.PI*1.92;
+    const side=Math.cos(a)>=0?1:-1;
+    const outer=R*(.94-(i%6)*.009), inner=R*(.57+(i%5)*.024);
+    const x0=cx+Math.cos(a)*outer,y0=cy+Math.sin(a)*outer;
+    const x1=cx+Math.cos(a+.035*Math.sin(i))*inner,y1=cy+Math.sin(a+.035*Math.sin(i))*inner;
+    const superior=Math.max(0,-Math.sin(a));
+    ctx.strokeStyle=`rgba(${142+Math.round(superior*28)},${52+Math.round(superior*12)},${58+Math.round(superior*10)},${.07+superior*.11+(i%4)*.012})`;
+    ctx.lineWidth=.42+(i%4)*.12;
     ctx.beginPath();ctx.moveTo(x0,y0);
-    ctx.bezierCurveTo(cx+side*R*.91,y0+Math.sin(i*.82)*R*.035,cx+side*R*1.13,y0-Math.cos(i*.51)*R*.046,x1,y0+Math.sin(i*.33)*R*.026);ctx.stroke();
+    ctx.bezierCurveTo(cx+Math.cos(a+.08*side)*R*.83,cy+Math.sin(a+.08*side)*R*.82,cx+Math.cos(a-.05*side)*R*.69,cy+Math.sin(a-.05*side)*R*.68,x1,y1);ctx.stroke();
     if(i%4===0){
-      const bx=cx+side*R*1.01,by=y0+Math.sin(i*.82)*R*.018;
-      ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+side*R*.09,by-R*.03,bx+side*R*.17,by-R*.06);ctx.stroke();
+      const bx=cx+Math.cos(a)*R*.77,by=cy+Math.sin(a)*R*.77;
+      ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+side*R*.05,by-R*.035,bx+side*R*.105,by-R*.055);ctx.stroke();ctx.globalAlpha=1;
     }
   }
 
-  const irisR=R*.505;
-  // Limbus: dark annulus and blue-grey transition rather than a hard outline.
-  const limbus=ctx.createRadialGradient(ix,iy,irisR*.86,ix,iy,irisR*1.18);
-  limbus.addColorStop(0,'rgba(8,15,16,0)');limbus.addColorStop(.52,'rgba(31,48,48,.16)');limbus.addColorStop(.80,'rgba(20,34,36,.52)');limbus.addColorStop(1,'rgba(8,14,16,.92)');
-  ctx.fillStyle=limbus;ctx.beginPath();ctx.arc(ix,iy,irisR*1.18,0,Math.PI*2);ctx.fill();
+  const irisR=R*.405;
+  // Corneoscleral limbus and subtle anterior chamber depth.
+  const limbus=ctx.createRadialGradient(ix,iy,irisR*.86,ix,iy,irisR*1.19);
+  limbus.addColorStop(0,"rgba(19,29,29,0)");limbus.addColorStop(.66,"rgba(44,67,69,.18)");limbus.addColorStop(.88,"rgba(29,44,47,.50)");limbus.addColorStop(1,"rgba(17,24,27,.10)");
+  ctx.fillStyle=limbus;ctx.beginPath();ctx.arc(ix,iy,irisR*1.20,0,Math.PI*2);ctx.fill();
 
-  // Iris base with radial depth and mild sectoral heterochromia.
-  const iris=ctx.createRadialGradient(ix-R*.08,iy-R*.10,R*.02,ix,iy,irisR);
-  iris.addColorStop(0,'#2f2f22');iris.addColorStop(.18,'#665f3e');iris.addColorStop(.42,'#777151');iris.addColorStop(.72,'#3b4a3f');iris.addColorStop(1,'#152526');
+  const iris=ctx.createRadialGradient(ix-R*.065,iy-R*.085,R*.02,ix,iy,irisR);
+  iris.addColorStop(0,"#8b6a34");iris.addColorStop(.17,"#aa813b");iris.addColorStop(.38,"#597d78");iris.addColorStop(.67,"#376579");iris.addColorStop(.88,"#6d7455");iris.addColorStop(1,"#23383a");
   ctx.fillStyle=iris;ctx.beginPath();ctx.arc(ix,iy,irisR,0,Math.PI*2);ctx.fill();
 
-  // Stromal fibres with irregular spacing, thickness and pigmentation.
-  for(let i=0;i<1180;i++){
-    const a=i/1180*Math.PI*2 + Math.sin(i*.73)*.007;
-    const inner=R*(.150+.020*Math.sin(i*.91));
-    const outer=R*(.482+.018*Math.sin(i*.29));
-    const bend=.015*Math.sin(i*.17)+.010*Math.sin(i*.47);
-    const mid=R*(.29+.040*Math.sin(i*.13));
-    const warm=i%17===0, dark=i%4===0;
-    ctx.strokeStyle=warm?'rgba(214,183,115,.19)':dark?'rgba(12,22,19,.23)':'rgba(156,160,112,.095)';
-    ctx.lineWidth=warm?.60:.26+(i%3)*.035;
+  // High-density stromal architecture with pigment variation and radial crypts.
+  for(let i=0;i<1560;i++){
+    const a=i/1560*Math.PI*2 + .012*Math.sin(i*.41);
+    const inner=R*(.112+.025*Math.sin(i*.83));
+    const outer=R*(.386+.014*Math.sin(i*.29));
+    const mid=R*(.235+.045*Math.sin(i*.13));
+    const amber=i%17===0, blue=i%7===0, dark=i%4===0;
+    ctx.strokeStyle=amber?'rgba(226,173,74,.28)':blue?'rgba(93,164,181,.19)':dark?'rgba(21,37,39,.28)':'rgba(192,190,137,.11)';
+    ctx.lineWidth=amber?.72:blue?.48:.28;
     ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*inner,iy+Math.sin(a)*inner);
-    ctx.quadraticCurveTo(ix+Math.cos(a+bend)*mid,iy+Math.sin(a+bend)*mid,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
+    ctx.quadraticCurveTo(ix+Math.cos(a+.025*Math.sin(i))*mid,iy+Math.sin(a+.025*Math.sin(i))*mid,ix+Math.cos(a)*outer,iy+Math.sin(a)*outer);ctx.stroke();
   }
-
-  // Contraction furrows and crypts.
   for(let j=0;j<6;j++){
-    ctx.strokeStyle=`rgba(7,15,14,${.145-j*.014})`;ctx.lineWidth=.55;
-    ctx.beginPath();
-    for(let k=0;k<=220;k++){
-      const a=k/220*Math.PI*2;
-      const rr=R*(.326+j*.026+.007*Math.sin(a*(7+j)+j*.9));
-      const x=ix+Math.cos(a)*rr,y=iy+Math.sin(a)*rr;
-      k?ctx.lineTo(x,y):ctx.moveTo(x,y);
-    }
-    ctx.closePath();ctx.stroke();
+    ctx.strokeStyle=`rgba(13,29,31,${.20-j*.018})`;ctx.lineWidth=.65;
+    ctx.beginPath();for(let i=0;i<=220;i++){const a=i/220*Math.PI*2;const rr=R*(.275+j*.019+.006*Math.sin(a*(8+j)+j));const x=ix+Math.cos(a)*rr,y=iy+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.stroke();
   }
-  ctx.strokeStyle='rgba(222,198,139,.16)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(ix,iy,R*.252,0,Math.PI*2);ctx.stroke();
-  for(let i=0;i<42;i++){
-    const a=i/42*Math.PI*2+.11, rr=R*(.255+(i%6)*.031);
-    ctx.fillStyle=`rgba(7,14,12,${.17+(i%5)*.022})`;
-    ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*(.014+(i%4)*.003),R*.0055,a,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<46;i++){
+    const a=i/46*Math.PI*2+.08,rr=R*(.21+(i%7)*.024);
+    ctx.fillStyle=`rgba(9,19,20,${.18+(i%5)*.025})`;ctx.beginPath();ctx.ellipse(ix+Math.cos(a)*rr,iy+Math.sin(a)*rr,R*(.012+(i%3)*.004),R*.0055,a,0,Math.PI*2);ctx.fill();
   }
 
-  // Pupil and pupillary ruff.
-  const pr=R*(.142+.0022*Math.sin(t*.18));
-  ctx.strokeStyle='rgba(32,29,21,.88)';ctx.lineWidth=2.1;ctx.beginPath();ctx.arc(ix,iy,pr*1.09,0,Math.PI*2);ctx.stroke();
-  const pupil=ctx.createRadialGradient(ix-R*.022,iy-R*.018,0,ix,iy,pr);
-  pupil.addColorStop(0,'#000');pupil.addColorStop(.86,'#010202');pupil.addColorStop(1,'#0b0e0d');
-  ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pr,0,Math.PI*2);ctx.fill();
+  const pupilR=R*(.105+.002*Math.sin(t*.25));
+  ctx.strokeStyle="rgba(19,22,19,.92)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(ix,iy,pupilR*1.08,0,Math.PI*2);ctx.stroke();
+  const pupil=ctx.createRadialGradient(ix-R*.018,iy-R*.018,0,ix,iy,pupilR);
+  pupil.addColorStop(0,"#000");pupil.addColorStop(.82,"#010203");pupil.addColorStop(1,"#111719");ctx.fillStyle=pupil;ctx.beginPath();ctx.arc(ix,iy,pupilR,0,Math.PI*2);ctx.fill();
 
-  // Corneal optics: transparent dome, edge thickness, tear film and subdued Purkinje reflections.
-  const cornea=ctx.createRadialGradient(ix-R*.20,iy-R*.28,R*.015,ix,iy,R*.73);
-  cornea.addColorStop(0,'rgba(255,255,255,.19)');cornea.addColorStop(.10,'rgba(255,255,255,.045)');cornea.addColorStop(.62,'rgba(170,206,209,.012)');cornea.addColorStop(1,'rgba(89,132,139,.135)');
-  ctx.fillStyle=cornea;ctx.beginPath();ctx.arc(ix,iy,R*.710,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(202,229,230,.15)';ctx.lineWidth=.9;ctx.beginPath();ctx.arc(ix,iy,R*.710,0,Math.PI*2);ctx.stroke();
+  // Corneal optical dome and tear film.
+  const cornea=ctx.createRadialGradient(ix-R*.20,iy-R*.27,R*.01,ix,iy,R*.50);
+  cornea.addColorStop(0,"rgba(255,255,255,.31)");cornea.addColorStop(.09,"rgba(255,255,255,.075)");cornea.addColorStop(.58,"rgba(174,215,220,.018)");cornea.addColorStop(.91,"rgba(86,139,147,.10)");cornea.addColorStop(1,"rgba(43,82,91,.19)");
+  ctx.fillStyle=cornea;ctx.beginPath();ctx.arc(ix,iy,R*.505,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="rgba(214,238,239,.24)";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(ix,iy,R*.505,0,Math.PI*2);ctx.stroke();
 
-  // Penetrating keratoplasty graft-host junction and individual interrupted sutures.
-  ctx.strokeStyle='rgba(215,224,217,.24)';ctx.lineWidth=.75;ctx.beginPath();ctx.arc(ix,iy,R*.574,0,Math.PI*2);ctx.stroke();
+  // PKP graft boundary, interrupted sutures and restrained stromal edema.
+  ctx.strokeStyle="rgba(222,232,226,.29)";ctx.lineWidth=.8;ctx.beginPath();ctx.arc(ix,iy,R*.455,0,Math.PI*2);ctx.stroke();
   for(let i=0;i<16;i++){
-    const a=i/16*Math.PI*2+.050;
-    const r1=R*.548,r2=R*.632;
-    ctx.strokeStyle='rgba(219,224,218,.26)';ctx.lineWidth=.58;
+    const a=i/16*Math.PI*2+.04;
+    const r1=R*.435,r2=R*.495;
+    ctx.strokeStyle="rgba(221,226,219,.38)";ctx.lineWidth=.72;
     ctx.beginPath();ctx.moveTo(ix+Math.cos(a)*r1,iy+Math.sin(a)*r1);ctx.lineTo(ix+Math.cos(a)*r2,iy+Math.sin(a)*r2);ctx.stroke();
-    ctx.fillStyle='rgba(224,228,222,.24)';ctx.beginPath();ctx.arc(ix+Math.cos(a)*r2,iy+Math.sin(a)*r2,R*.006,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="rgba(220,225,217,.34)";ctx.beginPath();ctx.arc(ix+Math.cos(a)*R*.465,iy+Math.sin(a)*R*.465,1.2,0,Math.PI*2);ctx.fill();
   }
+  const edemaX=ix+R*.22,edemaY=iy-R*.16;
+  const edema=ctx.createRadialGradient(edemaX,edemaY,0,edemaX,edemaY,R*.17);
+  edema.addColorStop(0,"rgba(222,233,228,.15)");edema.addColorStop(.52,"rgba(188,209,207,.075)");edema.addColorStop(1,"rgba(177,202,202,0)");
+  ctx.fillStyle=edema;ctx.beginPath();ctx.ellipse(edemaX,edemaY,R*.18,R*.115,-.35,0,Math.PI*2);ctx.fill();
 
-  // Clinically restrained stromal oedema: diffuse haze and faint Descemet-like folds.
-  const hx=ix+R*.23,hy=iy-R*.17;
-  const haze=ctx.createRadialGradient(hx,hy,0,hx,hy,R*.23);
-  haze.addColorStop(0,'rgba(202,215,211,.13)');haze.addColorStop(.58,'rgba(166,192,193,.050)');haze.addColorStop(1,'rgba(145,176,180,0)');
-  ctx.fillStyle=haze;ctx.beginPath();ctx.arc(hx,hy,R*.24,0,Math.PI*2);ctx.fill();
-  for(let i=0;i<5;i++){
-    const yy=hy-R*.055+i*R*.025;
-    ctx.strokeStyle='rgba(224,236,235,.08)';ctx.lineWidth=.7;
-    ctx.beginPath();ctx.moveTo(hx-R*.12,yy);ctx.bezierCurveTo(hx-R*.04,yy-R*.018,hx+R*.05,yy+R*.018,hx+R*.13,yy);ctx.stroke();
-  }
+  // Softbox reflections with camera-like shape, based on the clinical reference.
+  ctx.fillStyle="rgba(255,255,255,.78)";ctx.beginPath();ctx.ellipse(ix-R*.20,iy-R*.255,R*.090,R*.022,-.46,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.40)";ctx.beginPath();ctx.ellipse(ix-R*.105,iy-R*.325,R*.035,R*.014,-.35,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.49)";ctx.lineWidth=2.1;ctx.beginPath();ctx.arc(ix,iy,R*.335,Math.PI*1.11,Math.PI*1.50);ctx.stroke();
+  ctx.strokeStyle="rgba(245,255,255,.18)";ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(ix,iy,R*.49,.12*Math.PI,.83*Math.PI);ctx.stroke();
 
-  // Reflections are small and clinically neutral.
-  ctx.fillStyle='rgba(255,255,255,.58)';ctx.beginPath();ctx.ellipse(ix-R*.255,iy-R*.305,R*.080,R*.020,-.52,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.24)';ctx.beginPath();ctx.ellipse(ix-R*.108,iy-R*.395,R*.025,R*.012,-.35,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(244,252,252,.18)';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(ix,iy,R*.675,.14*Math.PI,.86*Math.PI);ctx.stroke();
+  // Globe edge glazing.
+  const edge=ctx.createRadialGradient(cx-R*.18,cy-R*.20,R*.43,cx,cy,R);
+  edge.addColorStop(.66,"rgba(255,255,255,0)");edge.addColorStop(.88,"rgba(92,112,117,.04)");edge.addColorStop(1,"rgba(3,8,10,.48)");
+  ctx.fillStyle=edge;ctx.fillRect(cx-R,cy-R,R*2,R*2);
   ctx.restore();
 
-  // Eyelids, margins and restrained lashes.
-  const close=blink*R*.57;
-  const upper=cy-R*.035+close, lower=cy+R*.040-close*.86;
-  const upperSkin=ctx.createLinearGradient(0,cy-R,0,cy);
-  upperSkin.addColorStop(0,'#483335');upperSkin.addColorStop(.60,'#927067');upperSkin.addColorStop(1,'#654745');
-  ctx.fillStyle=upperSkin;ctx.beginPath();ctx.moveTo(cx-R*1.50,upper);ctx.bezierCurveTo(cx-R*.86,cy-R*.67+close,cx+R*.89,cy-R*.65+close,cx+R*1.50,upper);ctx.lineTo(cx+R*1.61,cy-R*1.18);ctx.lineTo(cx-R*1.61,cy-R*1.18);ctx.closePath();ctx.fill();
-  const lowerSkin=ctx.createLinearGradient(0,cy,0,cy+R);
-  lowerSkin.addColorStop(0,'#987168');lowerSkin.addColorStop(.66,'#604543');lowerSkin.addColorStop(1,'#271f22');
-  ctx.fillStyle=lowerSkin;ctx.beginPath();ctx.moveTo(cx-R*1.50,lower);ctx.bezierCurveTo(cx-R*.87,cy+R*.59-close*.86,cx+R*.90,cy+R*.58-close*.86,cx+R*1.50,lower);ctx.lineTo(cx+R*1.61,cy+R*1.19);ctx.lineTo(cx-R*1.61,cy+R*1.19);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(45,27,30,.88)';ctx.lineWidth=1.9;ctx.beginPath();ctx.moveTo(cx-R*1.40,upper);ctx.bezierCurveTo(cx-R*.82,cy-R*.61+close,cx+R*.85,cy-R*.61+close,cx+R*1.40,upper);ctx.stroke();
-  ctx.strokeStyle='rgba(74,42,44,.64)';ctx.lineWidth=1.35;ctx.beginPath();ctx.moveTo(cx-R*1.39,lower);ctx.bezierCurveTo(cx-R*.84,cy+R*.54-close*.86,cx+R*.86,cy+R*.55-close*.86,cx+R*1.39,lower);ctx.stroke();
-  if(blink<.46){
-    for(let i=0;i<24;i++){
-      const q=i/23,x=cx-R*1.10+q*R*2.20,y=cy-R*(.475-.13*Math.pow((q-.5)*2,2));
-      ctx.strokeStyle=`rgba(24,17,19,${.32+(i%4)*.055})`;ctx.lineWidth=.48;
-      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+(q-.5)*R*.018,y-R*.030,x+(q-.5)*R*.036,y-R*(.056+(i%3)*.009));ctx.stroke();
-    }
-  }
+  ctx.strokeStyle="rgba(213,229,230,.20)";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
 }
 
 function drawBiofield(ctx:CanvasRenderingContext2D,w:number,h:number,time:number,px:number,py:number,t:number){
@@ -517,9 +488,24 @@ function DocumentWorkspace({initial,onClose,notify}:{initial?:ClinicalDocumentId
 }
 
 function Patients({notify}:{notify:(s:string)=>void}){
-  const [active,setActive]=useState(0);const [visits,setVisits]=useState(false);const [visitIndex,setVisitIndex]=useState(0);const [action,setAction]=useState<string|null>(null);const [documents,setDocuments]=useState(false);
-  const list=[patient,{...patient,id:"CR-0241",name:"Петрова Анна Сергеевна",risk:19,status:"Стабильно"},{...patient,id:"CR-0196",name:"Кузнецов Михаил Олегович",risk:41,status:"Наблюдение"}];const p=list[active];
-  return <><div className="split"><section className="panel"><div className="sectionTitle"><div><span className="eyebrow">РЕЕСТР</span><h2>Пациенты</h2></div><button className="darkButton small" onClick={()=>setAction("add")}><Plus/>Добавить</button></div>{list.map((item,i)=><button className={`patientRow ${i===active?"active":""}`} key={item.id} onClick={()=>setActive(i)}><span>{item.name.split(" ").slice(0,2).map(s=>s[0]).join("")}</span><div><b>{item.name}</b><small>{item.id} · {item.procedure}</small></div><em>{item.risk}%</em><ChevronRight/></button>)}</section><section className="panel detail"><div className="sectionTitle"><div><span className="eyebrow">КАРТА ПАЦИЕНТА</span><h2>{p.name}</h2></div><button className="iconText" onClick={()=>setAction("edit")}><SlidersHorizontal/>Редактировать</button></div><p>{p.procedure}, {p.eye}</p><div className="facts"><div><span>Дата операции</span><b>{p.operationDate}</b></div><div><span>Лечащий врач</span><b>{p.doctor}</b></div><div><span>Риск</span><b>{p.risk}%</b></div><div><span>Достоверность</span><b>{p.confidence}%</b></div></div><div className="clinicalNote"><Stethoscope/><div><b>Клинический статус</b><p>{p.status}. Последняя открытая точка: визит {visitIndex+1}.</p></div></div><div className="quickGrid"><button onClick={()=>setVisits(true)}><CalendarDays/><span>Визиты</span><ChevronRight/></button><button onClick={()=>setAction("studies")}><Microscope/><span>Исследования</span><ChevronRight/></button><button onClick={()=>setDocuments(true)}><FileText/><span>Документы</span><ChevronRight/></button></div></section></div>{visits&&<VisitDrawer patientName={p.name} close={()=>setVisits(false)} onSelect={setVisitIndex}/>} {documents&&<DocumentWorkspace onClose={()=>setDocuments(false)} notify={notify}/>} {action&&<Modal title={action==="add"?"Новый пациент":action==="edit"?"Редактирование карты":"Исследования пациента"} close={()=>setAction(null)}>{action==="add"||action==="edit"?<div className="formGrid"><label>ФИО<input defaultValue={action==="edit"?p.name:""} placeholder="Фамилия Имя Отчество"/></label><label>ID пациента<input defaultValue={action==="edit"?p.id:""} placeholder="CR-0000"/></label><label>Процедура<select defaultValue={p.procedure}><option>Сквозная кератопластика</option><option>DMEK</option><option>DSAEK</option></select></label><label>Глаз<select defaultValue={p.eye}><option>OD</option><option>OS</option></select></label><button className="darkButton" onClick={()=>{notify(action==="add"?"Пациент добавлен в демонстрационный реестр":"Изменения карты сохранены");setAction(null)}}><Save/>Сохранить</button></div>:<div className="studyList">{[["AS-OCT","14.05.2026","565 µm"],["Спекулярная микроскопия","14.05.2026","ECD 1820"],["Пахиметрия","14.05.2026","Δ +28 µm"]].map(x=><button key={x[0]} onClick={()=>notify(`${x[0]} открыто`)}><Microscope/><div><b>{x[0]}</b><span>{x[1]}</span></div><strong>{x[2]}</strong><ChevronRight/></button>)}</div>}</Modal>}</>}
+  const [list,setList]=useState<Patient[]>(initialPatients);
+  const [active,setActive]=useState(0);
+  const [action,setAction]=useState<"add"|"edit"|"studies"|"clinical"|null>(null);
+  const [visits,setVisits]=useState(false);const [documents,setDocuments]=useState(false);const [visitIndex,setVisitIndex]=useState(6);
+  const [studyDraft,setStudyDraft]=useState({type:"AS-OCT",date:"2026-07-25",result:"",status:"normal" as Study["status"],notes:""});
+  const [clinicalDraft,setClinicalDraft]=useState({date:"2026-07-25",visualAcuity:"",iop:"",pachymetry:"",endothelialDensity:"",diagnosis:"",treatment:"",notes:""});
+  const p=list[active]||list[0];
+  const updatePatient=(next:Patient)=>setList(prev=>prev.map((item,i)=>i===active?next:item));
+  const addPatientFromForm=(form:HTMLFormElement)=>{
+    const fd=new FormData(form);const name=String(fd.get("name")||"").trim();if(!name){notify("Укажите ФИО пациента");return}
+    const birthDate=String(fd.get("birthDate")||"");
+    const age=birthDate?Math.max(0,new Date().getFullYear()-new Date(birthDate).getFullYear()):0;
+    const next:Patient={id:String(fd.get("id")||`CR-${String(list.length+318).padStart(4,"0")}`),name,age,birthDate,sex:String(fd.get("sex")||"М") as "М"|"Ж",eye:String(fd.get("eye")||"OD") as "OD"|"OS",procedure:String(fd.get("procedure")||"Сквозная кератопластика"),operationDate:String(fd.get("operationDate")||""),doctor:String(fd.get("doctor")||"Не назначен"),risk:0,confidence:0,status:"Новый пациент",history:[0],diagnosis:String(fd.get("diagnosis")||""),phone:String(fd.get("phone")||""),studies:[],clinicalData:[]};
+    setList(prev=>[...prev,next]);setActive(list.length);setAction(null);notify("Пациент добавлен в реестр");
+  };
+  const addStudy=()=>{if(!studyDraft.result.trim()){notify("Укажите результат исследования");return}const study:Study={id:`ST-${Date.now()}`,type:studyDraft.type,date:studyDraft.date,result:studyDraft.result,status:studyDraft.status,notes:studyDraft.notes};updatePatient({...p,studies:[study,...(p.studies||[])]});setStudyDraft({...studyDraft,result:"",notes:""});notify("Исследование добавлено")};
+  const addClinical=()=>{if(!clinicalDraft.diagnosis.trim()){notify("Укажите клиническое заключение");return}const entry:ClinicalEntry={date:clinicalDraft.date,visualAcuity:clinicalDraft.visualAcuity,iop:Number(clinicalDraft.iop)||0,pachymetry:Number(clinicalDraft.pachymetry)||0,endothelialDensity:Number(clinicalDraft.endothelialDensity)||0,diagnosis:clinicalDraft.diagnosis,treatment:clinicalDraft.treatment,notes:clinicalDraft.notes};updatePatient({...p,clinicalData:[entry,...(p.clinicalData||[])]});setClinicalDraft({...clinicalDraft,visualAcuity:"",iop:"",pachymetry:"",endothelialDensity:"",diagnosis:"",treatment:"",notes:""});notify("Клинические данные сохранены")};
+  return <><div className="patientWorkspace"><section className="panel patientRegistry"><div className="sectionTitle"><div><span className="eyebrow">РЕЕСТР · {list.length} ПАЦИЕНТОВ</span><h2>Пациенты</h2></div><button className="darkButton small" onClick={()=>setAction("add")}><Plus/>Добавить</button></div><div className="registrySearch"><Search/><input placeholder="Поиск по ФИО, ID или диагнозу"/></div><div className="patientList">{list.map((item,i)=><button className={`patientRow ${i===active?"active":""}`} key={item.id} onClick={()=>setActive(i)}><span>{item.name.split(" ").slice(0,2).map(s=>s[0]).join("")}</span><div><b>{item.name}</b><small>{item.id} · {item.eye} · {item.procedure}</small><small>{item.diagnosis}</small></div><em className={item.risk>=65?"riskHigh":item.risk>=35?"riskMid":"riskLow"}>{item.risk}%</em><ChevronRight/></button>)}</div></section><section className="panel detail patientCard"><div className="sectionTitle"><div><span className="eyebrow">КАРТА ПАЦИЕНТА</span><h2>{p.name}</h2></div><button className="iconText" onClick={()=>setAction("edit")}><SlidersHorizontal/>Редактировать</button></div><p>{p.diagnosis||"Диагноз не указан"}</p><div className="facts patientFacts"><div><span>ID</span><b>{p.id}</b></div><div><span>Дата рождения</span><b>{p.birthDate||"—"}</b></div><div><span>Операция</span><b>{p.procedure}</b></div><div><span>Дата операции</span><b>{p.operationDate||"—"}</b></div><div><span>Лечащий врач</span><b>{p.doctor}</b></div><div><span>Клинический риск</span><b>{p.risk}%</b></div></div><div className="clinicalNote"><Stethoscope/><div><b>{p.status}</b><p>{p.clinicalData?.[0]?.diagnosis||"Новая карта: добавьте результаты исследований и клинические данные."}</p></div></div><div className="quickGrid patientActions"><button onClick={()=>setVisits(true)}><CalendarDays/><span>Визиты</span><ChevronRight/></button><button onClick={()=>setAction("studies")}><Microscope/><span>Исследования <b>{p.studies?.length||0}</b></span><ChevronRight/></button><button onClick={()=>setAction("clinical")}><ClipboardList/><span>Клинические данные <b>{p.clinicalData?.length||0}</b></span><ChevronRight/></button><button onClick={()=>setDocuments(true)}><FileText/><span>Документы</span><ChevronRight/></button></div><div className="patientSummaryGrid"><article><span>Последнее исследование</span><strong>{p.studies?.[0]?.type||"Нет данных"}</strong><small>{p.studies?.[0]?.result||"Добавьте исследование"}</small></article><article><span>Последнее заключение</span><strong>{p.clinicalData?.[0]?.date||"Нет данных"}</strong><small>{p.clinicalData?.[0]?.diagnosis||"Добавьте клиническую запись"}</small></article></div></section></div>{visits&&<VisitDrawer patientName={p.name} close={()=>setVisits(false)} onSelect={setVisitIndex}/>} {documents&&<DocumentWorkspace onClose={()=>setDocuments(false)} notify={notify}/>} {action&&<Modal title={action==="add"?"Новый пациент":action==="edit"?"Редактирование карты":action==="studies"?"Исследования пациента":"Клинические данные"} close={()=>setAction(null)}>{action==="add"?<form className="formGrid patientForm" onSubmit={e=>{e.preventDefault();addPatientFromForm(e.currentTarget)}}><label>ФИО<input name="name" placeholder="Фамилия Имя Отчество" required/></label><label>ID пациента<input name="id" placeholder="Сформируется автоматически"/></label><label>Дата рождения<input name="birthDate" type="date"/></label><label>Пол<select name="sex"><option>М</option><option>Ж</option></select></label><label>Глаз<select name="eye"><option>OD</option><option>OS</option></select></label><label>Тип операции<select name="procedure"><option>Сквозная кератопластика</option><option>DALK</option><option>DMEK</option><option>DSAEK</option><option>Повторная PKP</option></select></label><label>Дата операции<input name="operationDate" type="date"/></label><label>Лечащий врач<input name="doctor" placeholder="ФИО врача"/></label><label className="wide">Диагноз<textarea name="diagnosis" placeholder="Основной диагноз и клиническая ситуация"/></label><label>Телефон<input name="phone" placeholder="+7 ..."/></label><button className="darkButton" type="submit"><Save/>Создать карту пациента</button></form>:action==="edit"?<div className="formGrid patientForm"><label>ФИО<input value={p.name} onChange={e=>updatePatient({...p,name:e.target.value})}/></label><label>Статус<input value={p.status} onChange={e=>updatePatient({...p,status:e.target.value})}/></label><label className="wide">Диагноз<textarea value={p.diagnosis||""} onChange={e=>updatePatient({...p,diagnosis:e.target.value})}/></label><label>Риск, %<input type="number" min="0" max="100" value={p.risk} onChange={e=>updatePatient({...p,risk:Number(e.target.value)})}/></label><label>Врач<input value={p.doctor} onChange={e=>updatePatient({...p,doctor:e.target.value})}/></label><button className="darkButton" onClick={()=>{setAction(null);notify("Карта пациента обновлена")}}><Save/>Сохранить</button></div>:action==="studies"?<div className="recordWorkspace"><div className="recordForm"><label>Тип исследования<select value={studyDraft.type} onChange={e=>setStudyDraft({...studyDraft,type:e.target.value})}><option>AS-OCT</option><option>Спекулярная микроскопия</option><option>Пахиметрия</option><option>Конфокальная микроскопия</option><option>Топография / Pentacam</option><option>Фото щелевой лампы</option><option>Цитокиновая панель</option></select></label><label>Дата<input type="date" value={studyDraft.date} onChange={e=>setStudyDraft({...studyDraft,date:e.target.value})}/></label><label>Результат<input value={studyDraft.result} onChange={e=>setStudyDraft({...studyDraft,result:e.target.value})} placeholder="Например: CCT 548 мкм"/></label><label>Статус<select value={studyDraft.status} onChange={e=>setStudyDraft({...studyDraft,status:e.target.value as Study["status"]})}><option value="normal">Норма</option><option value="attention">Требует внимания</option><option value="critical">Критично</option></select></label><label className="wide">Комментарий<textarea value={studyDraft.notes} onChange={e=>setStudyDraft({...studyDraft,notes:e.target.value})}/></label><button className="darkButton" onClick={addStudy}><Plus/>Добавить исследование</button></div><div className="studyList">{(p.studies||[]).length===0?<div className="emptyState"><Microscope/><b>Исследований пока нет</b><span>Добавьте первое исследование пациента.</span></div>:(p.studies||[]).map(x=><button key={x.id}><Microscope/><div><b>{x.type}</b><span>{x.date} · {x.notes}</span></div><strong className={`studyStatus ${x.status}`}>{x.result}</strong></button>)}</div></div>:<div className="recordWorkspace"><div className="recordForm clinicalRecordForm"><label>Дата<input type="date" value={clinicalDraft.date} onChange={e=>setClinicalDraft({...clinicalDraft,date:e.target.value})}/></label><label>Острота зрения<input value={clinicalDraft.visualAcuity} onChange={e=>setClinicalDraft({...clinicalDraft,visualAcuity:e.target.value})} placeholder="0,8"/></label><label>ВГД<input type="number" value={clinicalDraft.iop} onChange={e=>setClinicalDraft({...clinicalDraft,iop:e.target.value})} placeholder="мм рт. ст."/></label><label>Пахиметрия<input type="number" value={clinicalDraft.pachymetry} onChange={e=>setClinicalDraft({...clinicalDraft,pachymetry:e.target.value})} placeholder="мкм"/></label><label>Плотность эндотелия<input type="number" value={clinicalDraft.endothelialDensity} onChange={e=>setClinicalDraft({...clinicalDraft,endothelialDensity:e.target.value})} placeholder="кл/мм²"/></label><label className="wide">Клиническое заключение<textarea value={clinicalDraft.diagnosis} onChange={e=>setClinicalDraft({...clinicalDraft,diagnosis:e.target.value})}/></label><label className="wide">Назначения / план<textarea value={clinicalDraft.treatment} onChange={e=>setClinicalDraft({...clinicalDraft,treatment:e.target.value})}/></label><label className="wide">Примечания<textarea value={clinicalDraft.notes} onChange={e=>setClinicalDraft({...clinicalDraft,notes:e.target.value})}/></label><button className="darkButton" onClick={addClinical}><Save/>Сохранить запись</button></div><div className="clinicalTimeline">{(p.clinicalData||[]).length===0?<div className="emptyState"><ClipboardList/><b>Клинических записей пока нет</b><span>Добавьте данные осмотра и заключение.</span></div>:(p.clinicalData||[]).map((x,i)=><article key={`${x.date}-${i}`}><div><b>{x.date}</b><span>VA {x.visualAcuity||"—"} · ВГД {x.iop||"—"} · CCT {x.pachymetry||"—"} · ECD {x.endothelialDensity||"—"}</span></div><h3>{x.diagnosis}</h3><p>{x.treatment}</p><small>{x.notes}</small></article>)}</div></div>}</Modal>}</>}
 
 function Observation({notify}:{notify:(s:string)=>void}){const [group,setGroup]=useState("Все");const [selected,setSelected]=useState<Marker|null>(null);const [visits,setVisits]=useState(false);const [visitIndex,setVisitIndex]=useState(0);const groups=["Все",...Array.from(new Set(markers.map(m=>m.group)))];const filtered=group==="Все"?markers:markers.filter(m=>m.group===group);return <><section className="panel"><div className="sectionTitle"><div><span className="eyebrow">МОЛЕКУЛЯРНЫЙ И КЛИНИЧЕСКИЙ ПРОФИЛЬ</span><h2>40 анализируемых признаков</h2><p className="sectionLead">Иммунология, ангиогенез, ремоделирование и морфометрия трансплантата. Активный визит: {visitIndex+1}.</p></div><button className="iconText" onClick={()=>setVisits(true)}><CalendarDays/>Архив визитов</button></div><div className="filterRow">{groups.map(g=><button key={g} className={group===g?"active":""} onClick={()=>setGroup(g)}>{g}</button>)}</div><div className="markerTable"><div className="markerHead"><span>Показатель</span><span>Значение</span><span>Референс</span><span>Динамика</span><span>Вклад</span></div>{filtered.map(m=><button className="markerRow" key={m.name} onClick={()=>setSelected(m)}><span><b>{m.name}</b><small>{m.group}</small></span><span>{m.value} {m.unit}</span><span>{m.ref}</span><span className={m.delta>0?"up":"down"}>{m.delta>0?"+":""}{m.delta}%</span><span><em><i style={{width:`${m.weight}%`}}/></em>{m.weight}%</span></button>)}</div></section>{visits&&<VisitDrawer patientName={patient.name} close={()=>setVisits(false)} onSelect={i=>{setVisitIndex(i);notify(`Открыт визит ${i+1}`)}}/>}{selected&&<Modal title={selected.name} close={()=>setSelected(null)}><div className="markerModal"><strong>{selected.value}</strong><span>{selected.unit}</span></div><p>{selected.group}. Референсный диапазон: {selected.ref}. Изменение относительно прошлого визита: {selected.delta>0?"+":""}{selected.delta}%.</p><div className="impact"><span>Вклад в прогноз</span><b>{selected.weight}%</b><em><i style={{width:`${selected.weight}%`}}/></em></div></Modal>}</>}
 
