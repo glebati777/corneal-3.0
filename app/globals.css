@@ -92,3 +92,4 @@
 @media(max-width:700px){.patientFacts,.patientActions,.patientSummaryGrid,.recordForm{grid-template-columns:1fr}.patientForm .wide,.recordForm .wide,.recordForm .darkButton{grid-column:auto}}
 
 .threeEye{position:absolute;inset:0;z-index:2;background:#17191b}.threeEye canvas{display:block;width:100%;height:100%}.visualStage:has(.threeEye):before{display:none}
+.threeEyeWrap{position:relative;width:100%;height:100%;overflow:hidden;background:#171a1c}.threeEye{width:100%;height:100%}.cornealState{position:absolute;left:18px;top:18px;z-index:5;min-width:205px;padding:12px 14px;border:1px solid rgba(196,221,226,.22);border-radius:13px;background:rgba(8,22,28,.72);backdrop-filter:blur(14px);color:#eff8fa;box-shadow:0 14px 32px rgba(0,0,0,.18)}.cornealState span,.cornealState small{display:block;font-size:9px;color:#9fb6bf}.cornealState strong{display:block;margin:3px 0;font-size:24px}.cornealState small{color:#d5e4e8;line-height:1.35}

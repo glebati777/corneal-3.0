@@ -172,26 +172,58 @@ function ThreeEye({time}:{time:number}){
   const timeRef=useRef(time);timeRef.current=time;
   useEffect(()=>{
     const host=mount.current;if(!host)return;
-    const scene=new THREE.Scene();scene.background=new THREE.Color(0x17191b);
-    const camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(0,0,5.3);
-    const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.appendChild(renderer.domElement);
-    const group=new THREE.Group();scene.add(group);
-    const sclera=new THREE.Mesh(new THREE.SphereGeometry(1.52,128,96),new THREE.MeshPhysicalMaterial({map:makeScleraTexture(),roughness:.38,metalness:0,clearcoat:.28,clearcoatRoughness:.35}));group.add(sclera);
-    const iris=new THREE.Mesh(new THREE.CircleGeometry(.73,128),new THREE.MeshPhysicalMaterial({map:makeIrisTexture(),roughness:.48,clearcoat:.18,clearcoatRoughness:.25,side:THREE.DoubleSide}));iris.position.z=1.405;group.add(iris);
-    const pupil=new THREE.Mesh(new THREE.CircleGeometry(.155,96),new THREE.MeshBasicMaterial({color:0x010202}));pupil.position.z=1.423;group.add(pupil);
-    const corneaMat=new THREE.MeshPhysicalMaterial({color:0xcbe5e7,transparent:true,opacity:.17,roughness:.05,metalness:0,transmission:.96,thickness:.24,ior:1.376,clearcoat:1,clearcoatRoughness:.045,depthWrite:false});
-    const cornea=new THREE.Mesh(new THREE.SphereGeometry(.84,128,64,0,Math.PI*2,0,Math.PI*.53),corneaMat);cornea.scale.z=.38;cornea.rotation.x=Math.PI/2;cornea.position.z=1.30;group.add(cornea);
-    const hazeMat=new THREE.MeshPhysicalMaterial({color:0xcbdde0,transparent:true,opacity:.04,roughness:.7,transmission:.18,depthWrite:false,side:THREE.DoubleSide});
-    const haze=new THREE.Mesh(new THREE.CircleGeometry(.67,128),hazeMat);haze.position.z=1.445;group.add(haze);
-    const edema=new THREE.Mesh(new THREE.CircleGeometry(.31,96),new THREE.MeshBasicMaterial({color:0xd6e2e2,transparent:true,opacity:0,depthWrite:false}));edema.position.set(.22,.12,1.452);group.add(edema);
-    const graft=new THREE.Mesh(new THREE.RingGeometry(.67,.675,128),new THREE.MeshBasicMaterial({color:0xcad7d7,transparent:true,opacity:.5,side:THREE.DoubleSide}));graft.position.z=1.458;group.add(graft);
-    for(let i=0;i<16;i++){const a=i/16*Math.PI*2;const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a)*.63,Math.sin(a)*.63,1.462),new THREE.Vector3(Math.cos(a)*.78,Math.sin(a)*.78,1.44)]);const line=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0xd7d8d2,transparent:true,opacity:.52}));group.add(line)}
-    const key=new THREE.DirectionalLight(0xffffff,4.4);key.position.set(-3,4,5);scene.add(key);const fill=new THREE.DirectionalLight(0xa9d9e8,1.35);fill.position.set(4,-1,3);scene.add(fill);scene.add(new THREE.HemisphereLight(0xffffff,0x532f31,1.3));
+    const scene=new THREE.Scene();scene.background=new THREE.Color(0x171a1c);
+    const camera=new THREE.PerspectiveCamera(31,1,.1,100);camera.position.set(0,0,5.7);
+    const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
+
+    const group=new THREE.Group();group.rotation.x=-.035;scene.add(group);
+    const scleraMat=new THREE.MeshPhysicalMaterial({map:makeScleraTexture(),roughness:.34,metalness:0,clearcoat:.42,clearcoatRoughness:.28,sheen:.14,sheenColor:new THREE.Color(0xf3d6d2)});
+    const sclera=new THREE.Mesh(new THREE.SphereGeometry(1.52,160,112),scleraMat);sclera.castShadow=true;sclera.receiveShadow=true;group.add(sclera);
+
+    const limbusOuter=new THREE.Mesh(new THREE.RingGeometry(.72,.86,160),new THREE.MeshPhysicalMaterial({color:0x273c3f,transparent:true,opacity:.72,roughness:.48,clearcoat:.25,side:THREE.DoubleSide}));limbusOuter.position.z=1.405;group.add(limbusOuter);
+    const limbusInner=new THREE.Mesh(new THREE.RingGeometry(.69,.74,160),new THREE.MeshBasicMaterial({color:0x87999a,transparent:true,opacity:.24,side:THREE.DoubleSide}));limbusInner.position.z=1.414;group.add(limbusInner);
+
+    const irisMat=new THREE.MeshPhysicalMaterial({map:makeIrisTexture(),roughness:.42,clearcoat:.32,clearcoatRoughness:.19,side:THREE.DoubleSide});
+    const iris=new THREE.Mesh(new THREE.CircleGeometry(.72,192),irisMat);iris.position.z=1.423;group.add(iris);
+    const pupil=new THREE.Mesh(new THREE.CircleGeometry(.145,128),new THREE.MeshBasicMaterial({color:0x000101}));pupil.position.z=1.438;group.add(pupil);
+    const pupilRim=new THREE.Mesh(new THREE.RingGeometry(.143,.169,128),new THREE.MeshBasicMaterial({color:0x241c13,transparent:true,opacity:.86,side:THREE.DoubleSide}));pupilRim.position.z=1.442;group.add(pupilRim);
+
+    const chamber=new THREE.Mesh(new THREE.CircleGeometry(.80,192),new THREE.MeshPhysicalMaterial({color:0x99bdc3,transparent:true,opacity:.035,transmission:.92,roughness:.04,depthWrite:false,side:THREE.DoubleSide}));chamber.position.z=1.448;group.add(chamber);
+    const corneaMat=new THREE.MeshPhysicalMaterial({color:0xd6eff1,transparent:true,opacity:.18,roughness:.025,metalness:0,transmission:.98,thickness:.35,ior:1.376,clearcoat:1,clearcoatRoughness:.018,depthWrite:false,side:THREE.DoubleSide});
+    const cornea=new THREE.Mesh(new THREE.SphereGeometry(.84,160,96),corneaMat);cornea.scale.set(1,1,.31);cornea.position.z=1.33;group.add(cornea);
+
+    const hazeMat=new THREE.MeshPhysicalMaterial({color:0xdbe7e7,transparent:true,opacity:.02,roughness:.82,transmission:.08,depthWrite:false,side:THREE.DoubleSide});
+    const haze=new THREE.Mesh(new THREE.CircleGeometry(.67,160),hazeMat);haze.position.z=1.615;group.add(haze);
+    const edemaMat=new THREE.MeshPhysicalMaterial({color:0xe7eeee,transparent:true,opacity:0,roughness:.9,transmission:.03,depthWrite:false,side:THREE.DoubleSide});
+    const edema=new THREE.Mesh(new THREE.CircleGeometry(.29,128),edemaMat);edema.position.set(.22,.14,1.623);edema.scale.set(1.2,.72,1);group.add(edema);
+
+    const graft=new THREE.Mesh(new THREE.RingGeometry(.655,.664,160),new THREE.MeshBasicMaterial({color:0xd9e0dc,transparent:true,opacity:.42,side:THREE.DoubleSide}));graft.position.z=1.626;group.add(graft);
+    const sutureMaterial=new THREE.LineBasicMaterial({color:0xe2e2dc,transparent:true,opacity:.62});
+    for(let i=0;i<16;i++){const a=i/16*Math.PI*2+.035;const r1=.635,r2=.775;const points=[new THREE.Vector3(Math.cos(a)*r1,Math.sin(a)*r1,1.631),new THREE.Vector3(Math.cos(a)*r2,Math.sin(a)*r2,1.598)];const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),sutureMaterial);group.add(line)}
+
+    const reflectionMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.62,depthWrite:false,side:THREE.DoubleSide});
+    const reflection=new THREE.Mesh(new THREE.PlaneGeometry(.38,.07),reflectionMat);reflection.position.set(-.23,.34,1.655);reflection.rotation.z=-.42;group.add(reflection);
+    const reflection2=new THREE.Mesh(new THREE.PlaneGeometry(.12,.035),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.30,depthWrite:false}));reflection2.position.set(-.05,.47,1.65);reflection2.rotation.z=-.30;group.add(reflection2);
+
+    const key=new THREE.DirectionalLight(0xffffff,4.8);key.position.set(-3.2,4.6,5.5);key.castShadow=true;scene.add(key);
+    const fill=new THREE.DirectionalLight(0xaed9e2,1.5);fill.position.set(4,-1.2,3.5);scene.add(fill);
+    const rim=new THREE.DirectionalLight(0xe9b8ad,1.05);rim.position.set(0,-3,-2);scene.add(rim);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x4c2f33,1.0));
+
     const resize=()=>{const r=host.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()};resize();const ro=new ResizeObserver(resize);ro.observe(host);
-    let frame=0;let raf=0;const animate=()=>{frame+=.01;const progression=timeRef.current/10;const hazeLevel=Math.max(0,(progression-.32)/.68);hazeMat.opacity=.025+hazeLevel*.43;hazeMat.roughness=.46+hazeLevel*.44;(edema.material as THREE.MeshBasicMaterial).opacity=hazeLevel*.24;edema.scale.setScalar(.75+hazeLevel*.55);iris.rotation.z=Math.sin(frame*.16)*.008;group.rotation.y=Math.sin(frame*.31)*.018;group.rotation.x=Math.cos(frame*.27)*.009;renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
-    return()=>{cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const m=o.material as THREE.Material | THREE.Material[];(Array.isArray(m)?m:[m]).forEach(v=>v.dispose())}});host.removeChild(renderer.domElement)};
+    let frame=0;let raf=0;
+    const animate=()=>{frame+=.01;const progression=THREE.MathUtils.clamp(timeRef.current/10,0,1);const hazeLevel=THREE.MathUtils.smoothstep(progression,.28,1);
+      hazeMat.opacity=.018+hazeLevel*.34;hazeMat.roughness=.56+hazeLevel*.38;corneaMat.transmission=.98-hazeLevel*.46;corneaMat.opacity=.17+hazeLevel*.14;corneaMat.roughness=.025+hazeLevel*.24;
+      edemaMat.opacity=hazeLevel*.26;edema.scale.set(1.05+hazeLevel*.62,.68+hazeLevel*.28,1);irisMat.color.setScalar(1-hazeLevel*.18);
+      iris.rotation.z=Math.sin(frame*.12)*.004;group.rotation.y=Math.sin(frame*.24)*.013;group.rotation.x=-.035+Math.cos(frame*.21)*.006;
+      renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
+    return()=>{cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Line){o.geometry.dispose();const m=o.material as THREE.Material|THREE.Material[];(Array.isArray(m)?m:[m]).forEach(v=>v.dispose())}});host.removeChild(renderer.domElement)};
   },[]);
-  return <div ref={mount} className="threeEye" aria-label={`Фотореалистичная 3D-модель глаза. Степень помутнения роговицы ${Math.round(Math.max(0,(time-3)/7)*100)}%`}/>;
+  const opacity=Math.round(THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(time/10,0,1),.28,1)*100);
+  return <div className="threeEyeWrap"><div ref={mount} className="threeEye" aria-label={`Трёхмерная модель глаза. Выраженность помутнения роговицы ${opacity}%`}/><div className="cornealState"><span>Оптическая прозрачность</span><strong>{100-opacity}%</strong><small>{opacity<20?"Роговица прозрачна":opacity<55?"Формируется стромальная дымка":"Выраженное помутнение трансплантата"}</small></div></div>;
 }
 
 function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number;selected:number;onSelect:(n:number)=>void}){
