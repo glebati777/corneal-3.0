@@ -178,70 +178,49 @@ const clinicalTimeline = [
 ] as const;
 
 function ThreeEye({time}:{time:number}){
-  const mount=useRef<HTMLDivElement>(null);
-  const timeRef=useRef(time); timeRef.current=time;
-  const [loaded,setLoaded]=useState(false);
+  const canvasRef=useRef<HTMLCanvasElement>(null);
+  const frame=useRef(0);
+  const [layer,setLayer]=useState<"clinical"|"graft"|"edema"|"vessels"|"endothelium">("clinical");
+  const [hover,setHover]=useState<string>("");
   const state=clinicalTimeline[Math.max(0,Math.min(clinicalTimeline.length-1,Math.round(time)))];
   useEffect(()=>{
-    const host=mount.current;if(!host)return;
-    const scene=new THREE.Scene();scene.background=new THREE.Color(0x111517);
-    const camera=new THREE.PerspectiveCamera(32,1,.1,100);camera.position.set(0,0,5.55);
-    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
-    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
-    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
-    const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.045).texture;
-
-    const root=new THREE.Group();root.rotation.x=-.025;scene.add(root);
-    const textureLoader=new THREE.TextureLoader();
-    const irisTexture=textureLoader.load('/textures/iris-reference.png');irisTexture.colorSpace=THREE.SRGBColorSpace;irisTexture.anisotropy=renderer.capabilities.getMaxAnisotropy();
-    const scleraTexture=makeScleraTexture();scleraTexture.anisotropy=renderer.capabilities.getMaxAnisotropy();
-    let corneaMat:THREE.MeshPhysicalMaterial|undefined, irisMat:THREE.MeshPhysicalMaterial|undefined;
-    let haze:THREE.Mesh|undefined, edema:THREE.Mesh|undefined;
-
-    const loader=new GLTFLoader();
-    loader.load('/models/aurelia-eye-foundation.glb',(gltf:any)=>{
-      const model=gltf.scene;model.scale.setScalar(1);root.add(model);
-      model.traverse((obj:THREE.Object3D)=>{
-        if(!(obj instanceof THREE.Mesh))return;
-        obj.castShadow=true;obj.receiveShadow=true;
-        const name=obj.name.toLowerCase();
-        if(name.includes('sclera'))obj.material=new THREE.MeshPhysicalMaterial({map:scleraTexture,color:0xfffbf5,roughness:.43,clearcoat:.46,clearcoatRoughness:.24,sheen:.2,sheenColor:new THREE.Color(0xf4d8d2)});
-        if(name.includes('iris')){irisMat=new THREE.MeshPhysicalMaterial({map:irisTexture,transparent:true,alphaTest:.03,roughness:.31,clearcoat:.55,clearcoatRoughness:.14,side:THREE.DoubleSide});obj.material=irisMat;}
-        if(name.includes('pupil'))obj.material=new THREE.MeshPhysicalMaterial({color:0x010202,roughness:.16,clearcoat:.65});
-        if(name.includes('limbus'))obj.material=new THREE.MeshPhysicalMaterial({color:0x263b3c,roughness:.42,clearcoat:.38,transparent:true,opacity:.78});
-        if(name.includes('cornea')){corneaMat=new THREE.MeshPhysicalMaterial({color:0xd8f1f2,transparent:true,opacity:.13,transmission:.99,thickness:.42,ior:1.376,roughness:.025,clearcoat:1,clearcoatRoughness:.012,depthWrite:false,side:THREE.DoubleSide});obj.material=corneaMat;obj.renderOrder=5;}
-      });
-      const hazeMat=new THREE.MeshPhysicalMaterial({color:0xe8efef,transparent:true,opacity:.01,roughness:.78,transmission:.18,depthWrite:false,side:THREE.DoubleSide});
-      haze=new THREE.Mesh(new THREE.CircleGeometry(.665,192),hazeMat);haze.position.z=1.62;haze.renderOrder=8;root.add(haze);
-      const edemaMat=new THREE.MeshPhysicalMaterial({color:0xf0f3f1,transparent:true,opacity:0,roughness:.92,transmission:.06,depthWrite:false,side:THREE.DoubleSide});
-      edema=new THREE.Mesh(new THREE.CircleGeometry(.24,128),edemaMat);edema.position.set(.23,.13,1.628);edema.scale.set(1.25,.72,1);edema.renderOrder=9;root.add(edema);
-      const graft=new THREE.Mesh(new THREE.RingGeometry(.653,.665,192),new THREE.MeshBasicMaterial({color:0xdde2dd,transparent:true,opacity:.46,side:THREE.DoubleSide}));graft.position.z=1.631;graft.renderOrder=10;root.add(graft);
-      const sutures=new THREE.Group();const sm=new THREE.LineBasicMaterial({color:0xe9e5dc,transparent:true,opacity:.62});
-      for(let i=0;i<16;i++){const a=i/16*Math.PI*2+.035;const points=[new THREE.Vector3(Math.cos(a)*.632,Math.sin(a)*.632,1.635),new THREE.Vector3(Math.cos(a)*.775,Math.sin(a)*.775,1.602)];sutures.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),sm));}root.add(sutures);
-      setLoaded(true);
-    },undefined,()=>setLoaded(false));
-
-    const key=new THREE.DirectionalLight(0xffffff,4.2);key.position.set(-3.4,4.7,5.2);key.castShadow=true;scene.add(key);
-    const fill=new THREE.DirectionalLight(0xaadbe3,1.3);fill.position.set(3.8,-.8,3.6);scene.add(fill);
-    const rim=new THREE.DirectionalLight(0xf0b7ac,.85);rim.position.set(0,-3.2,-1.5);scene.add(rim);
-    scene.add(new THREE.HemisphereLight(0xffffff,0x493137,.85));
-
-    const resize=()=>{const r=host.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()};resize();const ro=new ResizeObserver(resize);ro.observe(host);
-    let frame=0,raf=0;
-    const animate=()=>{frame+=.01;const index=Math.max(0,Math.min(clinicalTimeline.length-1,Math.round(timeRef.current)));const st=clinicalTimeline[index];
-      if(corneaMat){corneaMat.transmission=.99-st.opacity*.68;corneaMat.opacity=.12+st.opacity*.20;corneaMat.roughness=.018+st.opacity*.32;corneaMat.thickness=.38+st.edema*.32;}
-      if(irisMat)irisMat.color.setScalar(1-st.opacity*.24);
-      if(haze){const m=haze.material as THREE.MeshPhysicalMaterial;m.opacity=st.opacity*.72;m.roughness=.68+st.opacity*.25;}
-      if(edema){const m=edema.material as THREE.MeshPhysicalMaterial;m.opacity=st.edema*.46;edema.scale.set(1.0+st.edema*.9,.65+st.edema*.5,1);}
-      root.rotation.y=Math.sin(frame*.19)*.012;root.rotation.x=-.025+Math.cos(frame*.17)*.004;
-      renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
-    return()=>{cancelAnimationFrame(raf);ro.disconnect();pmrem.dispose();renderer.dispose();scene.traverse((o:THREE.Object3D)=>{if(o instanceof THREE.Mesh||o instanceof THREE.Line){o.geometry.dispose();const m=o.material as THREE.Material|THREE.Material[];(Array.isArray(m)?m:[m]).forEach(v=>v.dispose())}});if(renderer.domElement.parentElement===host)host.removeChild(renderer.domElement)};
-  },[]);
+    const canvas=canvasRef.current;if(!canvas)return;const ctx=canvas.getContext("2d");if(!ctx)return;let raf=0;
+    const draw=()=>{
+      const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+      if(canvas.width!==Math.floor(rect.width*dpr)||canvas.height!==Math.floor(rect.height*dpr)){canvas.width=Math.floor(rect.width*dpr);canvas.height=Math.floor(rect.height*dpr)}
+      ctx.setTransform(dpr,0,0,dpr,0,0);frame.current+=.012;
+      drawEyeModel(ctx,rect.width,rect.height,time,.5,.5,frame.current);
+      const w=rect.width,h=rect.height,cx=w*.50,cy=h*.52,R=Math.min(w*.38,h*.43),irisR=R*.405;
+      // Clinical state is rendered on top of the anatomical view, not hidden in a separate chart.
+      if(layer==="clinical"||layer==="edema"){
+        const haze=ctx.createRadialGradient(cx,cy,irisR*.12,cx,cy,irisR*1.18);
+        haze.addColorStop(0,`rgba(225,235,233,${state.opacity*.46})`);haze.addColorStop(.62,`rgba(206,222,221,${state.opacity*.34})`);haze.addColorStop(1,"rgba(188,207,207,0)");
+        ctx.fillStyle=haze;ctx.beginPath();ctx.arc(cx,cy,irisR*1.17,0,Math.PI*2);ctx.fill();
+        const ex=cx+R*.20,ey=cy-R*.14,eg=ctx.createRadialGradient(ex,ey,0,ex,ey,R*(.12+state.edema*.16));
+        eg.addColorStop(0,`rgba(244,247,244,${state.edema*.44})`);eg.addColorStop(.55,`rgba(217,229,226,${state.edema*.22})`);eg.addColorStop(1,"rgba(205,221,219,0)");ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(ex,ey,R*(.15+state.edema*.18),R*(.09+state.edema*.10),-.35,0,Math.PI*2);ctx.fill();
+      }
+      if(layer==="graft"){
+        ctx.save();ctx.strokeStyle="rgba(83,224,204,.92)";ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc(cx,cy,R*.455,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle="rgba(43,202,183,.10)";ctx.beginPath();ctx.arc(cx,cy,R*.455,0,Math.PI*2);ctx.fill();ctx.restore();
+      }
+      if(layer==="vessels"){
+        ctx.save();ctx.strokeStyle="rgba(242,90,112,.88)";ctx.lineWidth=2;for(let i=0;i<18;i++){const a=i/18*Math.PI*2;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*R*.94,cy+Math.sin(a)*R*.94);ctx.quadraticCurveTo(cx+Math.cos(a+.08)*R*.72,cy+Math.sin(a+.08)*R*.72,cx+Math.cos(a)*R*.53,cy+Math.sin(a)*R*.53);ctx.stroke()}ctx.restore();
+      }
+      if(layer==="endothelium"){
+        ctx.save();ctx.beginPath();ctx.arc(cx,cy,R*.44,0,Math.PI*2);ctx.clip();ctx.fillStyle="rgba(3,31,37,.70)";ctx.fillRect(cx-R*.46,cy-R*.46,R*.92,R*.92);const cell=R*.055;for(let row=-8;row<9;row++)for(let col=-8;col<9;col++){const x=cx+col*cell*1.45+(row%2)*cell*.72,y=cy+row*cell*1.25;if(Math.hypot(x-cx,y-cy)>R*.42)continue;const abnormal=(row*17+col*13)%11===0;ctx.strokeStyle=abnormal?"rgba(245,168,94,.9)":"rgba(123,226,210,.68)";ctx.lineWidth=.8;ctx.beginPath();for(let k=0;k<6;k++){const a=Math.PI/3*k,xx=x+Math.cos(a)*cell*.72,yy=y+Math.sin(a)*cell*.62;k?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)}ctx.closePath();ctx.stroke()}ctx.restore();
+      }
+      raf=requestAnimationFrame(draw)
+    };draw();return()=>cancelAnimationFrame(raf)
+  },[time,layer]);
   const transparency=Math.round((1-state.opacity)*100);
-  return <div className="threeEyeWrap"><div ref={mount} className="threeEye" aria-label={`Анатомическая glTF-модель глаза. Оптическая прозрачность ${transparency}%`}/>{!loaded&&<div className="modelLoading">Загрузка анатомической модели…</div>}<div className="cornealState"><span>Оптическая прозрачность</span><strong>{transparency}%</strong><small>{state.note}</small></div><div className="modelSourceBadge">glTF · многослойная анатомическая модель</div></div>;
+  const layerLabels={clinical:"Клинический вид",graft:"Трансплантат",edema:"Отёк и помутнение",vessels:"Неоваскуляризация",endothelium:"Эндотелий"};
+  return <div className="clinicalEyeMap">
+    <canvas ref={canvasRef} className="clinicalEyeCanvas" onPointerMove={e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;setHover(Math.hypot(x-.5,y-.52)<.20?"Роговица и трансплантат":Math.hypot(x-.5,y-.52)<.34?"Лимб и склера":"")}} onPointerLeave={()=>setHover("")}/>
+    <div className="eyeLayerRail">{(["clinical","graft","edema","vessels","endothelium"] as const).map(id=><button key={id} className={layer===id?"active":""} onClick={()=>setLayer(id)}>{layerLabels[id]}</button>)}</div>
+    <div className="cornealState"><span>Оптическая прозрачность</span><strong>{transparency}%</strong><small>{state.note}</small></div>
+    <div className="clinicalHotspot"><b>{hover||layerLabels[layer]}</b><span>{hover?"Нажмите на слой для детального анализа":`CCT ${state.cct} мкм · ECD ${state.ecd} кл/мм²`}</span></div>
+    <div className="modelSourceBadge">Интерактивная клиническая карта переднего сегмента</div>
+  </div>;
 }
-
 function DigitalTwin({mode, time, selected, onSelect}:{mode:TwinMode;time:number;selected:number;onSelect:(n:number)=>void}){
   const canvasRef = useRef<HTMLCanvasElement>(null);const pointer = useRef({x:0,y:0});const frame = useRef(0);const top = useMemo(()=>markers.slice().sort((a,b)=>b.weight-a.weight).slice(0,14),[]);
   useEffect(()=>{if(mode==="fusion")return;const canvas=canvasRef.current;if(!canvas)return;const ctx=canvas.getContext("2d");if(!ctx)return;let raf=0;const draw=()=>{const rect=canvas.getBoundingClientRect();const dpr=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==Math.floor(rect.width*dpr)||canvas.height!==Math.floor(rect.height*dpr)){canvas.width=Math.floor(rect.width*dpr);canvas.height=Math.floor(rect.height*dpr)}ctx.setTransform(dpr,0,0,dpr,0,0);const w=rect.width,h=rect.height;ctx.clearRect(0,0,w,h);frame.current+=.012;const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,"#07151d");bg.addColorStop(1,"#0b2029");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);if(mode==="anatomy")drawWorkstation(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);if(mode==="explorer")drawCorneaExplorer(ctx,w,h,time,pointer.current.x,pointer.current.y,frame.current);if(mode==="heat")drawPachymetry(ctx,w,h,time,pointer.current.x,pointer.current.y);if(mode==="network")drawNetwork(ctx,w,h,w/2,h/2,top,selected,frame.current);if(mode==="timeline")drawLongitudinal(ctx,w,h,time);if(mode==="forecast"||mode==="simulation")drawForecast(ctx,w,h,time,frame.current);raf=requestAnimationFrame(draw)};draw();return()=>cancelAnimationFrame(raf)},[mode,time,selected,top]);
@@ -524,11 +503,11 @@ function WorldClassTwin({onOpen}:{onOpen:()=>void}){
   const simulatedRisk=Math.max(18,Math.round(patient.risk-(adherence*.18+therapy*.16+monitoring*.08-18)));
   useEffect(()=>{if(!playing)return;const id=window.setInterval(()=>setTime(v=>v>=4?0:v+1),650);return()=>window.clearInterval(id)},[playing]);
   return <section className={`worldTwin ${fullscreen?"fullscreen":""}`}>
-    <div className="twinHeader"><div><span className="eyebrow">AURELIA 7.1 · ANATOMICAL DIGITAL TWIN</span><h2>Живая модель глаза и трансплантата</h2><p>Локальная glTF-модель переднего сегмента. Клиническая шкала синхронизирует прозрачность, отёк, пахиметрию и эндотелиальную плотность.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(4);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
+    <div className="twinHeader"><div><span className="eyebrow">AURELIA 7.2 · CLINICAL DIGITAL TWIN</span><h2>Живая модель глаза и трансплантата</h2><p>Интерактивная клиническая карта переднего сегмента. Временная шкала синхронно меняет изображение, показатели, риск и клиническое заключение.</p></div><div className="twinActions"><button className={playing?"active":""} onClick={()=>setPlaying(v=>!v)} title={playing?"Пауза":"Воспроизвести динамику"}>{playing?<Pause/>:<Play/>}</button><button className={compare?"active":""} onClick={()=>setCompare(!compare)} title="Сравнить с прошлым визитом"><History/></button><button onClick={()=>{setTime(4);setSelected(0);setMode("fusion");setAdherence(82);setTherapy(64);setMonitoring(78)}} title="Сбросить"><RotateCcw/></button><button onClick={()=>setFullscreen(!fullscreen)} title="Развернуть"><Maximize2/></button></div></div>
     <div className="modeRail">{twinModes.map(({id,label,icon:Icon})=><button key={id} className={mode===id?"active":""} onClick={()=>setMode(id)}><Icon/><span>{label}</span></button>)}</div>
     <div className="twinBody"><div className={`visualStage ${compare?"compareOn":""}`}><DigitalTwin mode={mode} time={time} selected={selected} onSelect={setSelected}/><div className="stageBadge"><i/><span>{compare?"Сравнение: +30 дней":"Модель синхронизирована"}</span><b>{clinicalTimeline[time].date}</b></div><div className="modelTelemetry"><span><i/> AS-OCT 14.05.2026</span><span><i/> ECD {clinicalTimeline[time].ecd} кл/мм²</span><span><i/> CCT {clinicalTimeline[time].cct} µm</span></div>{compare&&<div className="comparisonCard"><span>Изменение с прошлого визита</span><strong>+14%</strong><small>IL-6 ↑18% · VEGF-A ↑11% · ECD ↓7%</small></div>}</div>
       <aside className="inspector"><span className="eyebrow">{mode==="simulation"?"CLINICAL SCENARIO ENGINE":"КЛИНИЧЕСКИЙ СИГНАЛ"}</span><h3>{mode==="network"?signal.name:mode==="fusion"?"Глаз и зона трансплантата":mode==="forecast"?"Прогноз при наблюдении":mode==="simulation"?"Персональный сценарий":mode==="explorer"?"Слои роговицы":"Риск отторжения"}</h3><div className="inspectorValue"><strong>{mode==="network"?signal.value:mode==="forecast"?43:mode==="simulation"?simulatedRisk:mode==="explorer"?5:mode==="fusion"?clinicalTimeline[time].risk:patient.risk}</strong><span>{mode==="network"?signal.unit:mode==="explorer"?"слоёв":mode==="fusion"?"%":"%"}</span></div>
-      {mode==="simulation"?<div className="treatmentPlan"><div className="planAlert"><ShieldCheck/><div><b>Срочная очная оценка</b><span>Демонстрационный маршрут при подозрении на эндотелиальное отторжение после PKP. Не заменяет назначение врача.</span></div></div><div className="planPhases"><article><span>01 · СЕГОДНЯ</span><h4>Подтвердить диагноз</h4><p>Осмотр роговичного хирурга, щелевая лампа, острота зрения, ВГД, пахиметрия, AS-OCT и фотофиксация.</p><strong>Критично: исключить инфекционный и герпетический кератит до усиления иммуносупрессии.</strong></article><article><span>02 · ПОСЛЕ ПОДТВЕРЖДЕНИЯ</span><h4>Интенсивная местная терапия</h4><p>Основой лечения острого отторжения являются местные кортикостероиды. Конкретный препарат, частоту и длительность определяет офтальмолог с учётом тяжести и противопоказаний.</p><strong>Опубликованные протоколы тяжёлых эпизодов описывают очень частое применение в первые сутки.</strong></article><article><span>03 · 24–48 ЧАСОВ</span><h4>Оценить ответ</h4><p>Повторить осмотр, ВГД и пахиметрию; оценить прозрачность трансплантата, клетки/преципитаты и динамику отёка.</p><strong>При отсутствии ответа или тяжёлом течении — эскалация только под наблюдением специалиста.</strong></article><article><span>04 · ПОСЛЕ СТАБИЛИЗАЦИИ</span><h4>Постепенное снижение и профилактика</h4><p>Индивидуальное постепенное снижение частоты лечения, затем обсуждение длительной низкодозовой профилактики.</p><strong>Контролировать ВГД, катаракту, поверхность глаза и инфекционные осложнения.</strong></article></div><div className="evidenceNote"><b>Доказательная база:</b> клинические обзоры и руководства по отторжению трансплантата роговицы; долгосрочная низкодозовая стероидная профилактика изучалась в рандомизированном исследовании. Все дозировки и назначения требуют очного подтверждения.</div></div>:<><p>{mode==="network"?`${signal.group}. Динамика ${signal.delta>0?"+":""}${signal.delta}% относительно предыдущего визита.`:mode==="fusion"?"Фотореалистичная WebGL-модель показывает роговицу, радужку, трансплантат и швы. При движении по временной шкале прозрачность роговицы изменяется в соответствии с синтетической клинической динамикой.":mode==="forecast"?"Ожидаемое снижение риска до 43% за 90 дней при выполнении предложенного протокола наблюдения.":"Рост центральной толщины, снижение эндотелиальной плотности и провоспалительный профиль согласованно повышают риск. Визуализация использует демонстрационные данные пациента."}</p><div className="impact"><span>{mode==="network"?"Вклад в прогноз":"Достоверность"}</span><b>{mode==="network"?signal.weight:patient.confidence}%</b><em><i style={{width:`${mode==="network"?signal.weight:patient.confidence}%`}}/></em></div><div className="miniSignals">{top.slice(0,4).map((m,i)=><button key={m.name} onClick={()=>{setMode("network");setSelected(i)}}><span>{m.name}</span><b>{m.weight}%</b></button>)}</div></>}
+      {mode==="simulation"?<div className="treatmentPlan"><div className="planAlert"><ShieldCheck/><div><b>Срочная очная оценка</b><span>Демонстрационный маршрут при подозрении на эндотелиальное отторжение после PKP. Не заменяет назначение врача.</span></div></div><div className="planPhases"><article><span>01 · СЕГОДНЯ</span><h4>Подтвердить диагноз</h4><p>Осмотр роговичного хирурга, щелевая лампа, острота зрения, ВГД, пахиметрия, AS-OCT и фотофиксация.</p><strong>Критично: исключить инфекционный и герпетический кератит до усиления иммуносупрессии.</strong></article><article><span>02 · ПОСЛЕ ПОДТВЕРЖДЕНИЯ</span><h4>Интенсивная местная терапия</h4><p>Основой лечения острого отторжения являются местные кортикостероиды. Конкретный препарат, частоту и длительность определяет офтальмолог с учётом тяжести и противопоказаний.</p><strong>Опубликованные протоколы тяжёлых эпизодов описывают очень частое применение в первые сутки.</strong></article><article><span>03 · 24–48 ЧАСОВ</span><h4>Оценить ответ</h4><p>Повторить осмотр, ВГД и пахиметрию; оценить прозрачность трансплантата, клетки/преципитаты и динамику отёка.</p><strong>При отсутствии ответа или тяжёлом течении — эскалация только под наблюдением специалиста.</strong></article><article><span>04 · ПОСЛЕ СТАБИЛИЗАЦИИ</span><h4>Постепенное снижение и профилактика</h4><p>Индивидуальное постепенное снижение частоты лечения, затем обсуждение длительной низкодозовой профилактики.</p><strong>Контролировать ВГД, катаракту, поверхность глаза и инфекционные осложнения.</strong></article></div><div className="evidenceNote"><b>Доказательная база:</b> клинические обзоры и руководства по отторжению трансплантата роговицы; долгосрочная низкодозовая стероидная профилактика изучалась в рандомизированном исследовании. Все дозировки и назначения требуют очного подтверждения.</div></div>:<><p>{mode==="network"?`${signal.group}. Динамика ${signal.delta>0?"+":""}${signal.delta}% относительно предыдущего визита.`:mode==="fusion"?"Клиническая карта показывает роговицу, трансплантат, отёк, сосуды и эндотелий отдельными слоями. Временная шкала синхронно меняет визуальное состояние и ключевые показатели пациента.":mode==="forecast"?"Ожидаемое снижение риска до 43% за 90 дней при выполнении предложенного протокола наблюдения.":"Рост центральной толщины, снижение эндотелиальной плотности и провоспалительный профиль согласованно повышают риск. Визуализация использует демонстрационные данные пациента."}</p><div className="impact"><span>{mode==="network"?"Вклад в прогноз":"Достоверность"}</span><b>{mode==="network"?signal.weight:patient.confidence}%</b><em><i style={{width:`${mode==="network"?signal.weight:patient.confidence}%`}}/></em></div><div className="miniSignals">{top.slice(0,4).map((m,i)=><button key={m.name} onClick={()=>{setMode("network");setSelected(i)}}><span>{m.name}</span><b>{m.weight}%</b></button>)}</div></>}
       <div className="decisionStack"><button className="decision" onClick={()=>setResult(mode==="simulation"?`План сохранён в черновики: срочный осмотр сегодня, контроль через 24–48 часов и мониторинг ВГД.`:"План создан: контрольный визит через 14 дней, AS-OCT, ECD и панель IL-6/IL-17A/VEGF-A.")}><span>Следующее действие</span><b>{mode==="simulation"?"Сохранить план":"Создать план контроля"}</b><ChevronRight/></button><button className="darkButton" onClick={onOpen}>Открыть исследование<ArrowUpRight/></button></div>{result&&<div className="actionResult" aria-live="polite"><CheckCircle2/><div><b>Действие выполнено</b><span>{result}</span></div><button onClick={()=>setResult("")}><X/></button></div>}</aside>
     </div>
     <div className="timeControl"><div><Clock3/><span>Состояние модели</span><b>{clinicalTimeline[time].label} · {clinicalTimeline[time].date}</b></div><input aria-label="Время" type="range" min="0" max="4" step="1" value={time} onChange={e=>setTime(Number(e.target.value))}/><div className="timeTicks">{clinicalTimeline.map(point=><span key={point.date}>{point.label}</span>)}</div></div>
