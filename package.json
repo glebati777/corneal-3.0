@@ -1,6 +1,6 @@
 {
-  "name": "aurelia-clinical-intelligence-6",
-  "version": "6.0.0",
+  "name": "aurelia-clinical-intelligence-5-step-1",
+  "version": "5.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
